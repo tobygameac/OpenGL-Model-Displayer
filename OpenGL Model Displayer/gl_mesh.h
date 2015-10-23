@@ -5,20 +5,35 @@
 
 #include <glm\glm.hpp>
 #include <glm\gtc\matrix_transform.hpp>
+#include <glm\gtc\type_ptr.hpp>
 
 namespace OpenGLModelDisplayer {
 
-  extern GLint shader_program;
+  extern GLint shader_program_id;
   extern GLint shader_attribute_vertex_position_id;
   extern GLint shader_attribute_vertex_color_id;
   extern GLint shader_attribute_vertex_normal_id;
-  extern GLint shader_uniform_mvp_matrix_id;
+  extern GLint shader_uniform_model_matrix_id;
+  extern GLint shader_uniform_view_matrix_id;
+  extern GLint shader_uniform_projection_matrix_id;
 
   class GLMesh {
 
   public:
 
-    GLMesh() : vbo_vertices_(0), vbo_colors_(0), vbo_normals_(0), local_rotation_matrix_(glm::mat4(1.0f)) {
+    GLMesh() : vbo_vertices_(0), vbo_colors_(0), vbo_normals_(0), local_modelview_matrix_(glm::mat4(1.0)) {
+    }
+
+    void Translate(const glm::vec3 &translation_vector) {
+      local_modelview_matrix_ = glm::translate(local_modelview_matrix_, translation_vector);
+    }
+
+    void Rotate(const float rotation_degree, const glm::vec3 &rotation_vector) {
+      local_modelview_matrix_ = glm::rotate(local_modelview_matrix_, rotation_degree, rotation_vector);
+    }
+
+    void FillColors(const glm::vec3 &color) {
+      colors_ = std::vector<glm::vec3>(vertices_.size(), color);
     }
 
     void Upload() {
@@ -45,9 +60,7 @@ namespace OpenGLModelDisplayer {
       Draw(glm::mat4(1.0f));
     }
 
-    void Draw(const glm::mat4 &parent_mvp_matrix) {
-
-      glm::mat4 mvp_matrix = parent_mvp_matrix * local_rotation_matrix_;
+    void Draw(const glm::mat4 &parent_modelview_matrix) {
 
       if (vbo_vertices_) {
         glEnableVertexAttribArray(shader_attribute_vertex_position_id);
@@ -67,9 +80,11 @@ namespace OpenGLModelDisplayer {
         glVertexAttribPointer(shader_attribute_vertex_normal_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
       }
 
-      glUniformMatrix4fv(shader_uniform_mvp_matrix_id, 1, GL_FALSE, &mvp_matrix[0][0]);
+      glm::mat4 modelview_matrix = parent_modelview_matrix * local_modelview_matrix_;
 
-      glDrawArrays(GL_LINES, 0, vertices_.size());
+      glUniformMatrix4fv(shader_uniform_model_matrix_id, 1, GL_FALSE, glm::value_ptr(modelview_matrix));
+
+      glDrawArrays(GL_TRIANGLES, 0, vertices_.size());
 
       if (vbo_vertices_) {
         glDisableVertexAttribArray(shader_attribute_vertex_position_id);
@@ -99,7 +114,7 @@ namespace OpenGLModelDisplayer {
     std::vector<glm::vec3> colors_;
     std::vector<glm::vec3> normals_;
 
-    glm::mat4 local_rotation_matrix_;
+    glm::mat4 local_modelview_matrix_;
 
   private:
 
@@ -121,23 +136,21 @@ namespace OpenGLModelDisplayer {
       Draw(glm::mat4(1.0f));
     }
 
-    void Draw(const glm::mat4 &parent_mvp_matrix) {
+    void Draw(const glm::mat4 &parent_modelview_matrix) {
       if (mesh_ == nullptr) {
         return;
       }
 
-      mesh_->Draw(parent_mvp_matrix);
+      mesh_->Draw(parent_modelview_matrix);
 
       if (next_mesh_node_ != nullptr) {
-        next_mesh_node_->Draw(parent_mvp_matrix);
+        next_mesh_node_->Draw(parent_modelview_matrix);
       }
-
-      glm::mat4 child_mvp_matrix = parent_mvp_matrix * mesh_->local_rotation_matrix_;
 
       if (child_mesh_root_ != nullptr) {
-        child_mesh_root_->Draw(child_mvp_matrix);
+        glm::mat4 modelview_matrix = parent_modelview_matrix * mesh_->local_modelview_matrix_;
+        child_mesh_root_->Draw(modelview_matrix);
       }
-
     }
 
     std::shared_ptr<GLMesh> mesh_;

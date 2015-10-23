@@ -17,6 +17,7 @@
 #include <GL\glew.h>
 #include <glm\glm.hpp>
 #include <glm\gtc\matrix_transform.hpp>
+#include <glm\gtc\type_ptr.hpp>
 
 #include "gl_robot.h"
 
@@ -31,24 +32,28 @@ namespace OpenGLModelDisplayer {
   const std::string SHADER_VERTEX_COLOR_ATTRIBUTE_NAME = "vertex_color";
   const std::string SHADER_VERTEX_NORMAL_ATTRIBUTE_NAME = "vertex_normal";
 
-  const std::string SHADER_MVP_MATRIX_UNIFORM_NAME = "mvp_matrix";
+  const std::string SHADER_MODEL_MATRIX_UNIFORM_NAME = "model_matrix";
+  const std::string SHADER_VIEW_MATRIX_UNIFORM_NAME = "view_matrix";
+  const std::string SHADER_PROJECTION_MATRIX_UNIFORM_NAME = "projection_matrix";
 
   const std::string DEFAULT_MODEL_OBJ_FILE_PATH = "..\\data\\Robo8.obj";
 
-  GLint shader_program;
+  GLint shader_program_id;
   GLint shader_attribute_vertex_position_id;
   GLint shader_attribute_vertex_color_id;
   GLint shader_attribute_vertex_normal_id;
-  GLint shader_uniform_mvp_matrix_id;
+  GLint shader_uniform_model_matrix_id;
+  GLint shader_uniform_view_matrix_id;
+  GLint shader_uniform_projection_matrix_id;
 
-  const int FPS = 60;
+  const int FPS = 120;
   const int FRAME_REFRESH_TIME = (int)(1000.0 / FPS);
 
-  glm::vec3 eye_position(0.0, 5.0, 20.0);
+  glm::vec3 eye_position(10.0, 10.0, 10.0);
 
+  const float EYE_POSITION_SCALE_PER_SCROLLING = 0.9;
+  float eye_position_scale = 1.0;
   float rotated_angle;
-
-  std::vector<glm::vec3> colors;
 
   GLRobot robot;
 
@@ -74,7 +79,7 @@ namespace OpenGLModelDisplayer {
       InitializeComponent();
 
       srand((unsigned)time(0));
-      OpenGLInit();
+      InitializeOpenGL();
 
       this->MouseWheel += gcnew System::Windows::Forms::MouseEventHandler(this, &OpenGLModelDisplayer::GLForm::GLPanelMouseWheel);
 
@@ -105,7 +110,6 @@ namespace OpenGLModelDisplayer {
     static HDC hdc;
     static HGLRC hrc;
 
-
     static bool ParseFileIntoString(const std::string &file_path, std::string &file_string) {
       std::ifstream file_stream(file_path);
       if (!file_stream.is_open()) {
@@ -115,7 +119,7 @@ namespace OpenGLModelDisplayer {
       return true;
     }
 
-    static bool ReadObjFileIntoMesh(const std::string &file_path, std::shared_ptr<GLMesh> mesh) {
+    static bool ParseObjFileIntoMesh(const std::string &file_path, std::shared_ptr<GLMesh> mesh) {
 
       if (mesh == nullptr) {
         return false;
@@ -131,7 +135,7 @@ namespace OpenGLModelDisplayer {
 
       std::vector<glm::vec3> temp_vertices;
 
-      glm::vec3 color;
+      glm::vec3 color(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
 
       while (std::getline(file_stream, line_buffer)) {
         std::istringstream input_string_stream(line_buffer);
@@ -190,7 +194,7 @@ namespace OpenGLModelDisplayer {
       return true;
     }
 
-    void OpenGLInit() {
+    void InitializeOpenGL() {
 
       // Get Handle
       hwnd = (HWND)this->gl_panel->Handle.ToInt32();
@@ -259,48 +263,60 @@ namespace OpenGLModelDisplayer {
         std::cerr << "Could not compile the shader " << DEFAULT_FRAGMENT_SHADER_FILE_PATH << " .\n";
       }
 
-      shader_program = glCreateProgram();
-      glAttachShader(shader_program, vertex_shader);
-      glAttachShader(shader_program, fragment_shader);
-      glLinkProgram(shader_program);
+      shader_program_id = glCreateProgram();
+      glAttachShader(shader_program_id, vertex_shader);
+      glAttachShader(shader_program_id, fragment_shader);
+      glLinkProgram(shader_program_id);
 
       int shader_link_status;
-      glGetProgramiv(shader_program, GL_LINK_STATUS, &shader_link_status);
+      glGetProgramiv(shader_program_id, GL_LINK_STATUS, &shader_link_status);
       if (shader_link_status != GL_TRUE) {
         std::cerr << "Could not link the shader.\n";
       }
 
       int shader_validate_status;
-      glValidateProgram(shader_program);
-      glGetProgramiv(shader_program, GL_VALIDATE_STATUS, &shader_validate_status);
+      glValidateProgram(shader_program_id);
+      glGetProgramiv(shader_program_id, GL_VALIDATE_STATUS, &shader_validate_status);
       if (shader_validate_status != GL_TRUE) {
         std::cerr << "Could not validate the shader.\n";
       }
 
-      shader_attribute_vertex_position_id = glGetAttribLocation(shader_program, SHADER_VERTEX_POSITION_ATTRIBUTE_NAME.c_str());
+      shader_attribute_vertex_position_id = glGetAttribLocation(shader_program_id, SHADER_VERTEX_POSITION_ATTRIBUTE_NAME.c_str());
       if (shader_attribute_vertex_position_id == -1) {
         std::cerr << "Could not bind attribute " << SHADER_VERTEX_POSITION_ATTRIBUTE_NAME << ".\n";
       }
 
-      shader_attribute_vertex_color_id = glGetAttribLocation(shader_program, SHADER_VERTEX_COLOR_ATTRIBUTE_NAME.c_str());
+      shader_attribute_vertex_color_id = glGetAttribLocation(shader_program_id, SHADER_VERTEX_COLOR_ATTRIBUTE_NAME.c_str());
       if (shader_attribute_vertex_color_id == -1) {
         std::cerr << "Could not bind attribute " << SHADER_VERTEX_COLOR_ATTRIBUTE_NAME << ".\n";
       }
 
-      shader_attribute_vertex_normal_id = glGetAttribLocation(shader_program, SHADER_VERTEX_NORMAL_ATTRIBUTE_NAME.c_str());
+      shader_attribute_vertex_normal_id = glGetAttribLocation(shader_program_id, SHADER_VERTEX_NORMAL_ATTRIBUTE_NAME.c_str());
       if (shader_attribute_vertex_normal_id == -1) {
         std::cerr << "Could not bind attribute " << SHADER_VERTEX_NORMAL_ATTRIBUTE_NAME << ".\n";
       }
 
-      shader_uniform_mvp_matrix_id = glGetUniformLocation(shader_program, SHADER_MVP_MATRIX_UNIFORM_NAME.c_str());
+      shader_uniform_model_matrix_id = glGetUniformLocation(shader_program_id, SHADER_MODEL_MATRIX_UNIFORM_NAME.c_str());
 
-      if (shader_uniform_mvp_matrix_id == -1) {
-        std::cerr << "Could not bind uniform " << SHADER_MVP_MATRIX_UNIFORM_NAME << ".\n.";
+      if (shader_uniform_model_matrix_id == -1) {
+        std::cerr << "Could not bind uniform " << SHADER_MODEL_MATRIX_UNIFORM_NAME << ".\n.";
       }
 
-      glUseProgram(shader_program);
+      shader_uniform_view_matrix_id = glGetUniformLocation(shader_program_id, SHADER_VIEW_MATRIX_UNIFORM_NAME.c_str());
 
-      ReadObjFileIntoMesh(DEFAULT_MODEL_OBJ_FILE_PATH, robot.root_mesh_node_->mesh_);
+      if (shader_uniform_view_matrix_id == -1) {
+        std::cerr << "Could not bind uniform " << SHADER_VIEW_MATRIX_UNIFORM_NAME << ".\n.";
+      }
+
+      shader_uniform_projection_matrix_id = glGetUniformLocation(shader_program_id, SHADER_PROJECTION_MATRIX_UNIFORM_NAME.c_str());
+
+      if (shader_uniform_projection_matrix_id == -1) {
+        std::cerr << "Could not bind uniform " << SHADER_PROJECTION_MATRIX_UNIFORM_NAME << ".\n.";
+      }
+
+      //ParseObjFileIntoMesh(DEFAULT_MODEL_OBJ_FILE_PATH, robot.root_mesh_node_->mesh_);
+
+      robot.BuildSimpleMesh();
     }
 
     void RenderGLPanel() {
@@ -308,14 +324,20 @@ namespace OpenGLModelDisplayer {
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      glm::mat4 projection = glm::perspective(45.0f, 1.0f / 1.0f, 0.1f, 1000.0f);
-      glm::mat4 view = glm::lookAt(eye_position, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-      glm::mat4 model = glm::mat4(1.0f);
-      model = glm::rotate(model, (float)(rotated_angle * acos(-1) / 180.0), glm::vec3(0, 1, 0));
-      //model = glm::translate(model, glm::vec3(0, (int)rotated_angle / 360.0f, 0));
-      glm::mat4 mvp_matrix = projection * view * model;
+      glm::mat4 projection_matrix = glm::perspective(45.0f, 1.0f / 1.0f, 0.1f, 100.0f);
 
-      robot.Draw(mvp_matrix);
+      glm::mat4 view_matrix = glm::lookAt(eye_position * eye_position_scale, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+      glm::mat4 model_matrix = glm::mat4(1.0f);
+      model_matrix = glm::rotate(model_matrix, (float)(rotated_angle * acos(-1) / 180.0), glm::vec3(0, 1, 0));
+      //model_matrix = glm::translate(model_matrix, glm::vec3(0, (int)rotated_angle / 360.0f, 0));
+
+      glUseProgram(shader_program_id);
+
+      glUniformMatrix4fv(shader_uniform_projection_matrix_id, 1, GL_FALSE, glm::value_ptr(projection_matrix));
+      glUniformMatrix4fv(shader_uniform_view_matrix_id, 1, GL_FALSE, glm::value_ptr(view_matrix));
+
+      robot.Draw(model_matrix);
 
       SwapBuffers(hdc);
     }
@@ -323,11 +345,17 @@ namespace OpenGLModelDisplayer {
     System::Void Timer1Tick(System::Object^ sender, System::EventArgs^ e) {
       rotated_angle = rotated_angle + 1;
       rotated_angle = rotated_angle - ((rotated_angle > 360) ? 360 : 0);
+
       RenderGLPanel();
+
+      robot.head_mesh_node_->mesh_->Rotate(0.05, glm::vec3(0, 1, 0));
+      robot.left_upper_arm_mesh_node_->mesh_->Rotate(0.05, glm::vec3(1, 0, 0));
+      robot.right_lower_arm_mesh_node_->mesh_->Rotate(0.05, glm::vec3(0, 1, 0));
+      robot.right_upper_leg_mesh_node_->mesh_->Rotate(0.05, glm::vec3(1, 0, 0));
     }
 
     System::Void GLPanelMouseWheel(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
-      eye_position.z += (e->Delta < 0) ? 1 : -1;
+      eye_position_scale *= (e->Delta < 0) ? (1.0 / EYE_POSITION_SCALE_PER_SCROLLING) : EYE_POSITION_SCALE_PER_SCROLLING;
     }
 
     /// <summary>
