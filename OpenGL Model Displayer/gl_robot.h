@@ -50,77 +50,78 @@ namespace OpenGLModelDisplayer {
     void BuildSimpleMesh() {
       // Root
       root_mesh_node_->mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
-      CreateBoxMesh(root_mesh_node_->mesh_, 15, 0.001, 15);
+      CreateBoxMesh(root_mesh_node_->mesh_, 20, 0.001, 20);
+      root_mesh_node_->mesh_->Translate(glm::vec3(0, -8, 0));
       root_mesh_node_->mesh_->FillColors(glm::vec3(1, 1, 1));
       root_mesh_node_->mesh_->Upload();
 
       // Torso
       torso_mesh_node_->mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
-      CreateBoxMesh(torso_mesh_node_->mesh_, 4);
-      torso_mesh_node_->mesh_->Translate(glm::vec3(0, 6, 0));
+      CreateBoxMesh(torso_mesh_node_->mesh_, 4, 6, 4);
+      torso_mesh_node_->mesh_->Translate(glm::vec3(0, 9, 0));
       torso_mesh_node_->mesh_->FillColors(glm::vec3(0, 1, 0));
       torso_mesh_node_->mesh_->Upload();
 
       // Head
       head_mesh_node_->mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
-      CreateBoxMesh(head_mesh_node_->mesh_, 2);
-      head_mesh_node_->mesh_->Translate(glm::vec3(0, 3, 0));
+      CreateBoxMesh(head_mesh_node_->mesh_, 3, 2.5, 3);
+      head_mesh_node_->mesh_->Translate(glm::vec3(0, 4.25, 0));
       head_mesh_node_->mesh_->FillColors(glm::vec3(1, 0, 0));
       head_mesh_node_->mesh_->Upload();
 
       // Left upper arm
       left_upper_arm_mesh_node_->mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
-      CreateBoxMesh(left_upper_arm_mesh_node_->mesh_, 1.2);
-      left_upper_arm_mesh_node_->mesh_->Translate(glm::vec3(-2.6, 0, 0));
+      CreateBoxMesh(left_upper_arm_mesh_node_->mesh_, 1.5, 2, 1.5);
+      left_upper_arm_mesh_node_->mesh_->Translate(glm::vec3(-2.75, 1, 0));
       left_upper_arm_mesh_node_->mesh_->FillColors(glm::vec3(0, 0, 1));
       left_upper_arm_mesh_node_->mesh_->Upload();
 
       // Right upper arm
       right_upper_arm_mesh_node_->mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
-      CreateBoxMesh(right_upper_arm_mesh_node_->mesh_, 1.2);
-      right_upper_arm_mesh_node_->mesh_->Translate(glm::vec3(2.6, 0, 0));
+      CreateBoxMesh(right_upper_arm_mesh_node_->mesh_, 1.5, 2, 1.5);
+      right_upper_arm_mesh_node_->mesh_->Translate(glm::vec3(2.75, 1, 0));
       right_upper_arm_mesh_node_->mesh_->FillColors(glm::vec3(0, 0, 1));
       right_upper_arm_mesh_node_->mesh_->Upload();
 
       // Left lower arm
       left_lower_arm_mesh_node_->mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
-      CreateBoxMesh(left_lower_arm_mesh_node_->mesh_, 1);
-      left_lower_arm_mesh_node_->mesh_->Translate(glm::vec3(0, -1, 0));
+      CreateBoxMesh(left_lower_arm_mesh_node_->mesh_, 1, 2, 1);
+      left_lower_arm_mesh_node_->mesh_->Translate(glm::vec3(0, -2, 0));
       left_lower_arm_mesh_node_->mesh_->FillColors(glm::vec3(1, 1, 0));
       left_lower_arm_mesh_node_->mesh_->Upload();
 
       // Right lower arm
       right_lower_arm_mesh_node_->mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
-      CreateBoxMesh(right_lower_arm_mesh_node_->mesh_, 1);
-      right_lower_arm_mesh_node_->mesh_->Translate(glm::vec3(0, -1, 0));
+      CreateBoxMesh(right_lower_arm_mesh_node_->mesh_, 1, 2, 1);
+      right_lower_arm_mesh_node_->mesh_->Translate(glm::vec3(0, -2, 0));
       right_lower_arm_mesh_node_->mesh_->FillColors(glm::vec3(1, 1, 0));
       right_lower_arm_mesh_node_->mesh_->Upload();
 
       // Left upper leg
       left_upper_leg_mesh_node_->mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
-      CreateBoxMesh(left_upper_leg_mesh_node_->mesh_, 2.0);
-      left_upper_leg_mesh_node_->mesh_->Translate(glm::vec3(-1.5, -3, 0));
+      CreateBoxMesh(left_upper_leg_mesh_node_->mesh_, 2, 3, 2);
+      left_upper_leg_mesh_node_->mesh_->Translate(glm::vec3(-1.5, -4.5, 0));
       left_upper_leg_mesh_node_->mesh_->FillColors(glm::vec3(0, 0, 1));
       left_upper_leg_mesh_node_->mesh_->Upload();
 
       // Right upper leg
       right_upper_leg_mesh_node_->mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
-      CreateBoxMesh(right_upper_leg_mesh_node_->mesh_, 2.0);
-      right_upper_leg_mesh_node_->mesh_->Translate(glm::vec3(1.5, -3, 0));
+      CreateBoxMesh(right_upper_leg_mesh_node_->mesh_, 2, 3, 2);
+      right_upper_leg_mesh_node_->mesh_->Translate(glm::vec3(1.5, -4.5, 0));
       right_upper_leg_mesh_node_->mesh_->FillColors(glm::vec3(0, 0, 1));
       right_upper_leg_mesh_node_->mesh_->Upload();
 
       // Left lower leg
       left_lower_leg_mesh_node_->mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
-      CreateBoxMesh(left_lower_leg_mesh_node_->mesh_, 1.5);
-      left_lower_leg_mesh_node_->mesh_->Translate(glm::vec3(0, -0.75, 0));
+      CreateBoxMesh(left_lower_leg_mesh_node_->mesh_, 1.5, 3, 1.4);
+      left_lower_leg_mesh_node_->mesh_->Translate(glm::vec3(0, -3, 0));
       left_lower_leg_mesh_node_->mesh_->FillColors(glm::vec3(1, 1, 0));
       left_lower_leg_mesh_node_->mesh_->Upload();
 
       // Right lower leg
       right_lower_leg_mesh_node_->mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
-      CreateBoxMesh(right_lower_leg_mesh_node_->mesh_, 1.5);
-      right_lower_leg_mesh_node_->mesh_->Translate(glm::vec3(0, -0.75, 0));
+      CreateBoxMesh(right_lower_leg_mesh_node_->mesh_, 1.5, 3, 1.5);
+      right_lower_leg_mesh_node_->mesh_->Translate(glm::vec3(0, -3, 0));
       right_lower_leg_mesh_node_->mesh_->FillColors(glm::vec3(1, 1, 0));
       right_lower_leg_mesh_node_->mesh_->Upload();
     }
@@ -129,8 +130,8 @@ namespace OpenGLModelDisplayer {
       root_mesh_node_->Draw(glm::mat4(1.0));
     }
 
-    void Draw(const glm::mat4 &root_modelview_matrix) {
-      root_mesh_node_->Draw(root_modelview_matrix);
+    void Draw(const glm::mat4 &root_model_matrix) {
+      root_mesh_node_->Draw(root_model_matrix);
     }
 
     std::shared_ptr<MeshTreeNode> root_mesh_node_;

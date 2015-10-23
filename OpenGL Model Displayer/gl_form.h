@@ -28,13 +28,15 @@ namespace OpenGLModelDisplayer {
   const std::string DEFAULT_VERTEX_SHADER_FILE_PATH = "..\\shader\\vertex_shader.glsl";
   const std::string DEFAULT_FRAGMENT_SHADER_FILE_PATH = "..\\shader\\fragment_shader.glsl";
 
-  const std::string SHADER_VERTEX_POSITION_ATTRIBUTE_NAME = "vertex_position";
-  const std::string SHADER_VERTEX_COLOR_ATTRIBUTE_NAME = "vertex_color";
-  const std::string SHADER_VERTEX_NORMAL_ATTRIBUTE_NAME = "vertex_normal";
+  const std::string SHADER_ATTRIBUTE_VERTEX_POSITION_NAME = "vertex_position";
+  const std::string SHADER_ATTRIBUTE_VERTEX_COLOR_NAME = "vertex_color";
+  const std::string SHADER_ATTRIBUTE_VERTEX_NORMAL_NAME = "vertex_normal";
 
-  const std::string SHADER_MODEL_MATRIX_UNIFORM_NAME = "model_matrix";
-  const std::string SHADER_VIEW_MATRIX_UNIFORM_NAME = "view_matrix";
-  const std::string SHADER_PROJECTION_MATRIX_UNIFORM_NAME = "projection_matrix";
+  const std::string SHADER_UNIFORM_MODEL_MATRIX_NAME = "model_matrix";
+  const std::string SHADER_UNIFORM_VIEW_MATRIX_NAME = "view_matrix";
+  const std::string SHADER_UNIFORM_PROJECTION_MATRIX_NAME = "projection_matrix";
+  const std::string SHADER_UNIFORM_INVERSE_MODEL_MATRIX_NAME = "inverse_model_matrix";
+  const std::string SHADER_UNIFORM_TRANSPOSE_INVERSE_MODEL_MATRIX_NAME = "transpose_inverse_model_matrix";
 
   const std::string DEFAULT_MODEL_OBJ_FILE_PATH = "..\\data\\Robo8.obj";
 
@@ -45,14 +47,18 @@ namespace OpenGLModelDisplayer {
   GLint shader_uniform_model_matrix_id;
   GLint shader_uniform_view_matrix_id;
   GLint shader_uniform_projection_matrix_id;
+  GLint shader_uniform_inverse_model_matrix_id;
+  GLint shader_uniform_transpose_inverse_model_matrix_id;
 
   const int FPS = 120;
   const int FRAME_REFRESH_TIME = (int)(1000.0 / FPS);
 
-  glm::vec3 eye_position(10.0, 10.0, 10.0);
+  glm::vec3 eye_position(10.0, 0.0, 10.0);
 
   const float EYE_POSITION_SCALE_PER_SCROLLING = 0.9;
   float eye_position_scale = 1.0;
+
+  const float ROTATED_ANGLE_PER_SECOND = 30.0;
   float rotated_angle;
 
   GLRobot robot;
@@ -281,37 +287,49 @@ namespace OpenGLModelDisplayer {
         std::cerr << "Could not validate the shader.\n";
       }
 
-      shader_attribute_vertex_position_id = glGetAttribLocation(shader_program_id, SHADER_VERTEX_POSITION_ATTRIBUTE_NAME.c_str());
+      shader_attribute_vertex_position_id = glGetAttribLocation(shader_program_id, SHADER_ATTRIBUTE_VERTEX_POSITION_NAME.c_str());
       if (shader_attribute_vertex_position_id == -1) {
-        std::cerr << "Could not bind attribute " << SHADER_VERTEX_POSITION_ATTRIBUTE_NAME << ".\n";
+        std::cerr << "Could not bind attribute " << SHADER_ATTRIBUTE_VERTEX_POSITION_NAME << ".\n";
       }
 
-      shader_attribute_vertex_color_id = glGetAttribLocation(shader_program_id, SHADER_VERTEX_COLOR_ATTRIBUTE_NAME.c_str());
+      shader_attribute_vertex_color_id = glGetAttribLocation(shader_program_id, SHADER_ATTRIBUTE_VERTEX_COLOR_NAME.c_str());
       if (shader_attribute_vertex_color_id == -1) {
-        std::cerr << "Could not bind attribute " << SHADER_VERTEX_COLOR_ATTRIBUTE_NAME << ".\n";
+        std::cerr << "Could not bind attribute " << SHADER_ATTRIBUTE_VERTEX_COLOR_NAME << ".\n";
       }
 
-      shader_attribute_vertex_normal_id = glGetAttribLocation(shader_program_id, SHADER_VERTEX_NORMAL_ATTRIBUTE_NAME.c_str());
+      shader_attribute_vertex_normal_id = glGetAttribLocation(shader_program_id, SHADER_ATTRIBUTE_VERTEX_NORMAL_NAME.c_str());
       if (shader_attribute_vertex_normal_id == -1) {
-        std::cerr << "Could not bind attribute " << SHADER_VERTEX_NORMAL_ATTRIBUTE_NAME << ".\n";
+        std::cerr << "Could not bind attribute " << SHADER_ATTRIBUTE_VERTEX_NORMAL_NAME << ".\n";
       }
 
-      shader_uniform_model_matrix_id = glGetUniformLocation(shader_program_id, SHADER_MODEL_MATRIX_UNIFORM_NAME.c_str());
+      shader_uniform_model_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_MODEL_MATRIX_NAME.c_str());
 
       if (shader_uniform_model_matrix_id == -1) {
-        std::cerr << "Could not bind uniform " << SHADER_MODEL_MATRIX_UNIFORM_NAME << ".\n.";
+        std::cerr << "Could not bind uniform " << SHADER_UNIFORM_MODEL_MATRIX_NAME << ".\n";
       }
 
-      shader_uniform_view_matrix_id = glGetUniformLocation(shader_program_id, SHADER_VIEW_MATRIX_UNIFORM_NAME.c_str());
+      shader_uniform_view_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_VIEW_MATRIX_NAME.c_str());
 
       if (shader_uniform_view_matrix_id == -1) {
-        std::cerr << "Could not bind uniform " << SHADER_VIEW_MATRIX_UNIFORM_NAME << ".\n.";
+        std::cerr << "Could not bind uniform " << SHADER_UNIFORM_VIEW_MATRIX_NAME << ".\n";
       }
 
-      shader_uniform_projection_matrix_id = glGetUniformLocation(shader_program_id, SHADER_PROJECTION_MATRIX_UNIFORM_NAME.c_str());
+      shader_uniform_projection_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_PROJECTION_MATRIX_NAME.c_str());
 
       if (shader_uniform_projection_matrix_id == -1) {
-        std::cerr << "Could not bind uniform " << SHADER_PROJECTION_MATRIX_UNIFORM_NAME << ".\n.";
+        std::cerr << "Could not bind uniform " << SHADER_UNIFORM_PROJECTION_MATRIX_NAME << ".\n";
+      }
+
+      shader_uniform_inverse_model_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_INVERSE_MODEL_MATRIX_NAME.c_str());
+
+      if (shader_uniform_inverse_model_matrix_id == -1) {
+        std::cerr << "Could not bind uniform " << SHADER_UNIFORM_INVERSE_MODEL_MATRIX_NAME << ".\n";
+      }
+
+      shader_uniform_transpose_inverse_model_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_TRANSPOSE_INVERSE_MODEL_MATRIX_NAME.c_str());
+
+      if (shader_uniform_transpose_inverse_model_matrix_id == -1) {
+        std::cerr << "Could not bind uniform " << SHADER_UNIFORM_TRANSPOSE_INVERSE_MODEL_MATRIX_NAME << ".\n";
       }
 
       //ParseObjFileIntoMesh(DEFAULT_MODEL_OBJ_FILE_PATH, robot.root_mesh_node_->mesh_);
@@ -343,7 +361,7 @@ namespace OpenGLModelDisplayer {
     }
 
     System::Void Timer1Tick(System::Object^ sender, System::EventArgs^ e) {
-      rotated_angle = rotated_angle + 1;
+      rotated_angle = rotated_angle + ROTATED_ANGLE_PER_SECOND * (FRAME_REFRESH_TIME / 1000.0);
       rotated_angle = rotated_angle - ((rotated_angle > 360) ? 360 : 0);
 
       RenderGLPanel();
@@ -351,7 +369,7 @@ namespace OpenGLModelDisplayer {
       robot.head_mesh_node_->mesh_->Rotate(0.05, glm::vec3(0, 1, 0));
       robot.left_upper_arm_mesh_node_->mesh_->Rotate(0.05, glm::vec3(1, 0, 0));
       robot.right_lower_arm_mesh_node_->mesh_->Rotate(0.05, glm::vec3(0, 1, 0));
-      robot.right_upper_leg_mesh_node_->mesh_->Rotate(0.05, glm::vec3(1, 0, 0));
+      robot.right_upper_leg_mesh_node_->mesh_->Rotate(0.05, glm::vec3(0, 1, 0));
     }
 
     System::Void GLPanelMouseWheel(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
@@ -395,6 +413,6 @@ namespace OpenGLModelDisplayer {
 #pragma endregion
   private:
 
-    System::Void GLForm_Load(System::Object^  sender, System::EventArgs^  e) {}
+    System::Void GLForm_Load(System::Object^  sender, System::EventArgs^ e) {}
   };
 }
