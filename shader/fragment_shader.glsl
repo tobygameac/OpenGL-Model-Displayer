@@ -6,9 +6,12 @@ uniform mat4 projection_matrix;
 
 uniform mat4 inverse_model_matrix;
 
+uniform sampler2D texture;
+
 varying vec4 world_model_position;
 varying vec3 normal_direction;
 varying vec3 fragment_color;
+varying vec2 flipped_vertex_uv;
 
 vec4 scene_ambient = vec4(0.2, 0.2, 0.2, 1.0);
 
@@ -21,14 +24,16 @@ struct Material {
 
 Material front_material = Material(
   vec4(0.2, 0.2, 0.2, 1.0),
-  vec4(fragment_color, 1.0),
+  //vec4(fragment_color, 1.0),
+  texture2D(texture, flipped_vertex_uv),
   vec4(1.0, 1.0, 1.0, 1.0),
   5.0
   );
 
 Material back_material = Material(
   vec4(0.2, 0.2, 0.2, 1.0),
-  vec4(fragment_color * 0.2, 1.0),
+  //vec4(fragment_color * 0.2, 1.0),
+  texture2D(texture, flipped_vertex_uv) * 0.2,
   vec4(1.0, 1.0, 1.0, 1.0),
   5.0
   );
@@ -62,7 +67,7 @@ void main () {
     );
 
   lights[1] = Light(
-    vec4(-1.0, 0.0, 0.0, 0.0),
+    vec4(-1.0, 0.0, -1.0, 0.0),
     vec4(1.0, 1.0, 1.0, 1.0),
     vec4(1.0, 1.0, 1.0, 1.0),
     0.0, 1.0, 0.0,
@@ -131,4 +136,5 @@ void main () {
   }
 
   gl_FragColor = vec4(total_intensity, 1.0);
+
 }

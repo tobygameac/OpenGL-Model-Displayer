@@ -31,35 +31,39 @@ namespace OpenGLModelDisplayer {
   const std::string SHADER_ATTRIBUTE_VERTEX_POSITION_NAME = "vertex_position";
   const std::string SHADER_ATTRIBUTE_VERTEX_COLOR_NAME = "vertex_color";
   const std::string SHADER_ATTRIBUTE_VERTEX_NORMAL_NAME = "vertex_normal";
+  const std::string SHADER_ATTRIBUTE_VERTEX_UV_NAME = "vertex_uv";
 
   const std::string SHADER_UNIFORM_MODEL_MATRIX_NAME = "model_matrix";
   const std::string SHADER_UNIFORM_VIEW_MATRIX_NAME = "view_matrix";
   const std::string SHADER_UNIFORM_PROJECTION_MATRIX_NAME = "projection_matrix";
   const std::string SHADER_UNIFORM_INVERSE_MODEL_MATRIX_NAME = "inverse_model_matrix";
   const std::string SHADER_UNIFORM_TRANSPOSE_INVERSE_MODEL_MATRIX_NAME = "transpose_inverse_model_matrix";
+  const std::string SHADER_UNIFORM_TEXTURE_NAME = "texture";
 
-  const std::string DEFAULT_MODEL_OBJ_FILE_PATH = "..\\data\\Robo8.obj";
+  const std::string DEFAULT_MODEL_OBJ_FILE_PATH = "..\\data\\Optimus prime\\optimus.obj";
 
   GLint shader_program_id;
   GLint shader_attribute_vertex_position_id;
   GLint shader_attribute_vertex_color_id;
   GLint shader_attribute_vertex_normal_id;
+  GLint shader_attribute_vertex_uv_id;
   GLint shader_uniform_model_matrix_id;
   GLint shader_uniform_view_matrix_id;
   GLint shader_uniform_projection_matrix_id;
   GLint shader_uniform_inverse_model_matrix_id;
   GLint shader_uniform_transpose_inverse_model_matrix_id;
+  GLint shader_uniform_texture_id;
 
   const int FPS = 120;
   const int FRAME_REFRESH_TIME = (int)(1000.0 / FPS);
 
-  glm::vec3 eye_position(10.0, 0.0, 10.0);
+  glm::vec3 eye_position(3.0, 1.5, 3.0);
 
-  const float EYE_POSITION_SCALE_PER_SCROLLING = 0.9;
+  const float EYE_POSITION_SCALE_PER_SCROLLING = 0.9f;
   float eye_position_scale = 1.0;
 
-  const float ROTATED_ANGLE_PER_SECOND = 30.0;
-  float rotated_angle;
+  const float ROTATED_DEGREE_PER_SECOND = 30.0;
+  float rotated_degree;
 
   GLRobot robot;
 
@@ -125,81 +129,6 @@ namespace OpenGLModelDisplayer {
       return true;
     }
 
-    static bool ParseObjFileIntoMesh(const std::string &file_path, std::shared_ptr<GLMesh> mesh) {
-
-      if (mesh == nullptr) {
-        return false;
-      }
-
-      std::ifstream file_stream(file_path);
-      if (!file_stream.is_open()) {
-        return false;
-      }
-
-
-      std::string line_buffer;
-
-      std::vector<glm::vec3> temp_vertices;
-
-      glm::vec3 color(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
-
-      while (std::getline(file_stream, line_buffer)) {
-        std::istringstream input_string_stream(line_buffer);
-        std::string line_header;
-        input_string_stream >> line_header;
-
-        if (line_header == "#") {
-          continue;
-        } else if (line_header == "mtllib") {
-          continue;
-        } else if (line_header == "usemtl") {
-          color.x = rand() / (float)RAND_MAX;
-          color.y = rand() / (float)RAND_MAX;
-          color.z = rand() / (float)RAND_MAX;
-          continue;
-        } else if (line_header == "o") {
-          //temp_vertices.clear();
-          continue;
-        } else if (line_header == "s") {
-          continue;
-        } else if (line_header == "v") {
-          glm::vec3 vertex;
-          input_string_stream >> vertex.x >> vertex.y >> vertex.z;
-          //std::cout << vertex.x << " " << vertex.y << " " << vertex.z << "\n";
-          temp_vertices.push_back(vertex);
-        } else if (line_header == "f") {
-          std::string vertex_detail;
-          while (input_string_stream >> vertex_detail) {
-            std::replace(vertex_detail.begin(), vertex_detail.end(), '/', ' ');
-            std::istringstream vertex_detail_string_stream(vertex_detail);
-            size_t vertex_index, vt_index, vn_index;
-            vertex_detail_string_stream >> vertex_index;
-            mesh->vertices_.push_back(temp_vertices[vertex_index - 1]);
-            mesh->colors_.push_back(color);
-            if (vertex_detail_string_stream) {
-              vertex_detail_string_stream >> vt_index;
-            }
-            if (vertex_detail_string_stream) {
-              vertex_detail_string_stream >> vn_index;
-            }
-          }
-          continue;
-        } else if (line_header == "vn") {
-          continue;
-        } else if (line_header == "vt") {
-          continue;
-        } else if (line_header == "vp") {
-          continue;
-        } else {
-          continue;
-        }
-      }
-
-      mesh->Upload();
-
-      return true;
-    }
-
     void InitializeOpenGL() {
 
       // Get Handle
@@ -241,6 +170,8 @@ namespace OpenGLModelDisplayer {
 
       glEnable(GL_DEPTH_TEST);
       glDepthFunc(GL_LESS);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
       std::string vertex_shader_string;
       std::string fragment_shader_string;
@@ -302,39 +233,44 @@ namespace OpenGLModelDisplayer {
         std::cerr << "Could not bind attribute " << SHADER_ATTRIBUTE_VERTEX_NORMAL_NAME << ".\n";
       }
 
-      shader_uniform_model_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_MODEL_MATRIX_NAME.c_str());
+      shader_attribute_vertex_uv_id = glGetAttribLocation(shader_program_id, SHADER_ATTRIBUTE_VERTEX_UV_NAME.c_str());
+      if (shader_attribute_vertex_uv_id == -1) {
+        std::cerr << "Could not bind attribute " << SHADER_ATTRIBUTE_VERTEX_UV_NAME << ".\n";
+      }
 
+      shader_uniform_model_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_MODEL_MATRIX_NAME.c_str());
       if (shader_uniform_model_matrix_id == -1) {
         std::cerr << "Could not bind uniform " << SHADER_UNIFORM_MODEL_MATRIX_NAME << ".\n";
       }
 
       shader_uniform_view_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_VIEW_MATRIX_NAME.c_str());
-
       if (shader_uniform_view_matrix_id == -1) {
         std::cerr << "Could not bind uniform " << SHADER_UNIFORM_VIEW_MATRIX_NAME << ".\n";
       }
 
       shader_uniform_projection_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_PROJECTION_MATRIX_NAME.c_str());
-
       if (shader_uniform_projection_matrix_id == -1) {
         std::cerr << "Could not bind uniform " << SHADER_UNIFORM_PROJECTION_MATRIX_NAME << ".\n";
       }
 
       shader_uniform_inverse_model_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_INVERSE_MODEL_MATRIX_NAME.c_str());
-
       if (shader_uniform_inverse_model_matrix_id == -1) {
         std::cerr << "Could not bind uniform " << SHADER_UNIFORM_INVERSE_MODEL_MATRIX_NAME << ".\n";
       }
 
       shader_uniform_transpose_inverse_model_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_TRANSPOSE_INVERSE_MODEL_MATRIX_NAME.c_str());
-
       if (shader_uniform_transpose_inverse_model_matrix_id == -1) {
         std::cerr << "Could not bind uniform " << SHADER_UNIFORM_TRANSPOSE_INVERSE_MODEL_MATRIX_NAME << ".\n";
       }
 
-      //ParseObjFileIntoMesh(DEFAULT_MODEL_OBJ_FILE_PATH, robot.root_mesh_node_->mesh_);
+      shader_uniform_texture_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_TEXTURE_NAME.c_str());
+      if (shader_uniform_texture_id == -1) {
+        std::cerr << "Could not bind uniform " << SHADER_UNIFORM_TEXTURE_NAME << ".\n";
+      }
 
-      robot.BuildSimpleMesh();
+      if (!robot.BuildMeshFromObjFile(DEFAULT_MODEL_OBJ_FILE_PATH)) {
+        robot.BuildSimpleMesh();
+      }
     }
 
     void RenderGLPanel() {
@@ -342,13 +278,14 @@ namespace OpenGLModelDisplayer {
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      glm::mat4 projection_matrix = glm::perspective(45.0f, 1.0f / 1.0f, 0.1f, 100.0f);
+      float aspect_ratio = this->gl_panel->Size.Width / (float)this->gl_panel->Size.Height;
+
+      glm::mat4 projection_matrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 100.0f);
 
       glm::mat4 view_matrix = glm::lookAt(eye_position * eye_position_scale, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
       glm::mat4 model_matrix = glm::mat4(1.0f);
-      model_matrix = glm::rotate(model_matrix, (float)(rotated_angle * acos(-1) / 180.0), glm::vec3(0, 1, 0));
-      //model_matrix = glm::translate(model_matrix, glm::vec3(0, (int)rotated_angle / 360.0f, 0));
+      model_matrix = glm::rotate(model_matrix, glm::radians(rotated_degree), glm::vec3(0, 1, 0));
 
       glUseProgram(shader_program_id);
 
@@ -361,19 +298,19 @@ namespace OpenGLModelDisplayer {
     }
 
     System::Void Timer1Tick(System::Object^ sender, System::EventArgs^ e) {
-      rotated_angle = rotated_angle + ROTATED_ANGLE_PER_SECOND * (FRAME_REFRESH_TIME / 1000.0);
-      rotated_angle = rotated_angle - ((rotated_angle > 360) ? 360 : 0);
+      rotated_degree = rotated_degree + ROTATED_DEGREE_PER_SECOND * (FRAME_REFRESH_TIME / 1000.0f);
+      rotated_degree = rotated_degree - ((rotated_degree > 360) ? 360 : 0);
 
       RenderGLPanel();
 
-      robot.head_mesh_node_->mesh_->Rotate(0.05, glm::vec3(0, 1, 0));
-      robot.left_upper_arm_mesh_node_->mesh_->Rotate(0.05, glm::vec3(1, 0, 0));
-      robot.right_lower_arm_mesh_node_->mesh_->Rotate(0.05, glm::vec3(0, 1, 0));
-      robot.right_upper_leg_mesh_node_->mesh_->Rotate(0.05, glm::vec3(0, 1, 0));
+      robot.head_mesh_node_->mesh_->Rotate(glm::radians(45.0f * (FRAME_REFRESH_TIME / 1000.0f)), glm::vec3(0, 1, 0));
+      robot.left_upper_arm_mesh_node_->mesh_->Rotate(glm::radians(90.0f * (FRAME_REFRESH_TIME / 1000.0f)), glm::vec3(1, 0, 0));
+      robot.right_lower_arm_mesh_node_->mesh_->Rotate(glm::radians(60.0f * (FRAME_REFRESH_TIME / 1000.0f)), glm::vec3(0, 1, 0));
+      robot.right_upper_leg_mesh_node_->mesh_->Rotate(glm::radians(30.0f * (FRAME_REFRESH_TIME / 1000.0f)), glm::vec3(0, 1, 0));
     }
 
     System::Void GLPanelMouseWheel(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
-      eye_position_scale *= (e->Delta < 0) ? (1.0 / EYE_POSITION_SCALE_PER_SCROLLING) : EYE_POSITION_SCALE_PER_SCROLLING;
+      eye_position_scale *= (e->Delta < 0) ? (1.0f / EYE_POSITION_SCALE_PER_SCROLLING) : EYE_POSITION_SCALE_PER_SCROLLING;
     }
 
     /// <summary>

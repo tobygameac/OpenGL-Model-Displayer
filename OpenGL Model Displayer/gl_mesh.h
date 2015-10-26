@@ -1,11 +1,14 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <vector>
 
+#include <GL\glew.h>
 #include <glm\glm.hpp>
 #include <glm\gtc\matrix_transform.hpp>
 #include <glm\gtc\type_ptr.hpp>
+#include <opencv\cv.hpp>
 
 namespace OpenGLModelDisplayer {
 
@@ -13,17 +16,86 @@ namespace OpenGLModelDisplayer {
   extern GLint shader_attribute_vertex_position_id;
   extern GLint shader_attribute_vertex_color_id;
   extern GLint shader_attribute_vertex_normal_id;
+  extern GLint shader_attribute_vertex_uv_id;
   extern GLint shader_uniform_model_matrix_id;
   extern GLint shader_uniform_view_matrix_id;
   extern GLint shader_uniform_projection_matrix_id;
   extern GLint shader_uniform_inverse_model_matrix_id;
   extern GLint shader_uniform_transpose_inverse_model_matrix_id;
+  extern GLint shader_uniform_texture_id;
 
   class GLMesh {
 
   public:
 
-    GLMesh() : vbo_vertices_(0), vbo_colors_(0), vbo_normals_(0), local_model_matrix_(glm::mat4(1.0)) {
+    GLMesh() : vbo_vertices_(0), vbo_colors_(0), vbo_normals_(0), vbo_uvs_(0), local_model_matrix_(glm::mat4(1.0)), texture_id_(0) {
+    }
+
+    static void AddCube(std::shared_ptr<GLMesh> mesh, const float size) {
+      AddCube(mesh, glm::vec3(0, 0, 0), size, size, size);
+    }
+
+    static void AddCube(std::shared_ptr<GLMesh> mesh, const float width, const float length, const float height) {
+      AddCube(mesh, glm::vec3(0, 0, 0), width, length, height);
+    }
+
+    static void AddCube(std::shared_ptr<GLMesh> mesh, const glm::vec3 center, const float size) {
+      AddCube(mesh, center, size, size, size);
+    }
+
+    static void AddCube(std::shared_ptr<GLMesh> mesh, const glm::vec3 center, const float width, const float length, const float height) {
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, 1 * height));
+
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, -1 * height));
+
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, -1 * height));
+
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, -1 * height));
+
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, -1 * height));
+
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, -1 * height));
+
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, 1 * height));
+
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, -1 * height));
+
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, 1 * height));
+
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, -1 * height));
+
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, 1 * height));
+
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, 1 * height));
+
+      for (size_t i = 0; i < mesh->vertices_.size(); ++i) {
+        mesh->vertices_[i] *= 0.5;
+        mesh->vertices_[i] += center;
+      }
     }
 
     void Translate(const glm::vec3 &translation_vector) {
@@ -34,9 +106,15 @@ namespace OpenGLModelDisplayer {
       local_model_matrix_ = glm::rotate(local_model_matrix_, rotation_degree, rotation_vector);
     }
 
-    void FillColors(const glm::vec3 &color) {
+    void SetColor(const glm::vec3 &color) {
       colors_ = std::vector<glm::vec3>(vertices_.size(), color);
-      normals_ = vertices_;
+    }
+
+    void SetNormal() {
+      normals_.resize(vertices_.size());
+      for (size_t i = 0; i < vertices_.size(); i += 3) {
+        normals_[i] = normals_[i + 1] = normals_[i + 2] = glm::normalize(glm::cross(vertices_[i + 1] - vertices_[i], vertices_[i + 2] - vertices_[i]));
+      }
     }
 
     void Upload() {
@@ -56,6 +134,12 @@ namespace OpenGLModelDisplayer {
         glGenBuffers(1, &vbo_normals_);
         glBindBuffer(GL_ARRAY_BUFFER, vbo_normals_);
         glBufferData(GL_ARRAY_BUFFER, normals_.size() * sizeof(normals_[0]), normals_.data(), GL_STATIC_DRAW);
+      }
+
+      if (uvs_.size()) {
+        glGenBuffers(1, &vbo_uvs_);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_uvs_);
+        glBufferData(GL_ARRAY_BUFFER, uvs_.size() * sizeof(uvs_[0]), uvs_.data(), GL_STATIC_DRAW);
       }
     }
 
@@ -83,6 +167,16 @@ namespace OpenGLModelDisplayer {
         glVertexAttribPointer(shader_attribute_vertex_normal_id, 3, GL_FLOAT, GL_FALSE, 0, 0);
       }
 
+      if (vbo_uvs_) {
+        glEnableVertexAttribArray(shader_attribute_vertex_uv_id);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_uvs_);
+        glVertexAttribPointer(shader_attribute_vertex_uv_id, 2, GL_FLOAT, GL_FALSE, 0, 0);
+      }
+
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, texture_id_);
+      glUniform1i(shader_uniform_texture_id, 0);
+
       glm::mat4 model_matrix = parent_model_matrix * local_model_matrix_;
       glUniformMatrix4fv(shader_uniform_model_matrix_id, 1, GL_FALSE, glm::value_ptr(model_matrix));
 
@@ -106,11 +200,18 @@ namespace OpenGLModelDisplayer {
         glDisableVertexAttribArray(shader_attribute_vertex_normal_id);
       }
 
+      if (vbo_uvs_) {
+        glDisableVertexAttribArray(shader_attribute_vertex_uv_id);
+      }
+
     }
 
     std::vector<glm::vec3> vertices_;
     std::vector<glm::vec3> colors_;
     std::vector<glm::vec3> normals_;
+    std::vector<glm::vec2> uvs_;
+
+    GLuint texture_id_;
 
     glm::mat4 local_model_matrix_;
 
@@ -119,41 +220,8 @@ namespace OpenGLModelDisplayer {
     GLuint vbo_vertices_;
     GLuint vbo_normals_;
     GLuint vbo_colors_;
-  };
+    GLuint vbo_uvs_;
 
-  class MeshTreeNode {
-
-  public:
-    MeshTreeNode() : mesh_(new GLMesh()), next_mesh_node_(nullptr), child_mesh_root_(nullptr) {}
-
-    MeshTreeNode(GLMesh *mesh) : mesh_(mesh), next_mesh_node_(nullptr), child_mesh_root_(nullptr) {}
-
-    MeshTreeNode(GLMesh *mesh, MeshTreeNode *next_mesh_node, MeshTreeNode *child_mesh_root) : mesh_(mesh), next_mesh_node_(next_mesh_node), child_mesh_root_(child_mesh_root) {}
-
-    void Draw() {
-      Draw(glm::mat4(1.0f));
-    }
-
-    void Draw(const glm::mat4 &parent_model_matrix) {
-      if (mesh_ == nullptr) {
-        return;
-      }
-
-      mesh_->Draw(parent_model_matrix);
-
-      if (next_mesh_node_ != nullptr) {
-        next_mesh_node_->Draw(parent_model_matrix);
-      }
-
-      if (child_mesh_root_ != nullptr) {
-        glm::mat4 model_matrix = parent_model_matrix * mesh_->local_model_matrix_;
-        child_mesh_root_->Draw(model_matrix);
-      }
-    }
-
-    std::shared_ptr<GLMesh> mesh_;
-    std::shared_ptr<MeshTreeNode> next_mesh_node_;
-    std::shared_ptr<MeshTreeNode> child_mesh_root_;
   };
 
 }
