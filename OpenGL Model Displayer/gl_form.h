@@ -33,11 +33,11 @@ namespace OpenGLModelDisplayer {
   const std::string SHADER_ATTRIBUTE_VERTEX_NORMAL_NAME = "vertex_normal";
   const std::string SHADER_ATTRIBUTE_VERTEX_UV_NAME = "vertex_uv";
 
-  const std::string SHADER_UNIFORM_MODEL_MATRIX_NAME = "model_matrix";
+  const std::string SHADER_UNIFORM_modelview_matrix_NAME = "modelview_matrix";
   const std::string SHADER_UNIFORM_VIEW_MATRIX_NAME = "view_matrix";
   const std::string SHADER_UNIFORM_PROJECTION_MATRIX_NAME = "projection_matrix";
-  const std::string SHADER_UNIFORM_INVERSE_MODEL_MATRIX_NAME = "inverse_model_matrix";
-  const std::string SHADER_UNIFORM_TRANSPOSE_INVERSE_MODEL_MATRIX_NAME = "transpose_inverse_model_matrix";
+  const std::string SHADER_UNIFORM_INVERSE_modelview_matrix_NAME = "inverse_modelview_matrix";
+  const std::string SHADER_UNIFORM_TRANSPOSE_INVERSE_modelview_matrix_NAME = "transpose_inverse_modelview_matrix";
   const std::string SHADER_UNIFORM_TEXTURE_NAME = "texture";
 
   const std::string DEFAULT_MODEL_OBJ_FILE_PATH = "..\\data\\Optimus prime\\optimus.obj";
@@ -47,11 +47,11 @@ namespace OpenGLModelDisplayer {
   GLint shader_attribute_vertex_color_id;
   GLint shader_attribute_vertex_normal_id;
   GLint shader_attribute_vertex_uv_id;
-  GLint shader_uniform_model_matrix_id;
+  GLint shader_uniform_modelview_matrix_id;
   GLint shader_uniform_view_matrix_id;
   GLint shader_uniform_projection_matrix_id;
-  GLint shader_uniform_inverse_model_matrix_id;
-  GLint shader_uniform_transpose_inverse_model_matrix_id;
+  GLint shader_uniform_inverse_modelview_matrix_id;
+  GLint shader_uniform_transpose_inverse_modelview_matrix_id;
   GLint shader_uniform_texture_id;
 
   const int FPS = 120;
@@ -238,9 +238,9 @@ namespace OpenGLModelDisplayer {
         std::cerr << "Could not bind attribute " << SHADER_ATTRIBUTE_VERTEX_UV_NAME << ".\n";
       }
 
-      shader_uniform_model_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_MODEL_MATRIX_NAME.c_str());
-      if (shader_uniform_model_matrix_id == -1) {
-        std::cerr << "Could not bind uniform " << SHADER_UNIFORM_MODEL_MATRIX_NAME << ".\n";
+      shader_uniform_modelview_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_modelview_matrix_NAME.c_str());
+      if (shader_uniform_modelview_matrix_id == -1) {
+        std::cerr << "Could not bind uniform " << SHADER_UNIFORM_modelview_matrix_NAME << ".\n";
       }
 
       shader_uniform_view_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_VIEW_MATRIX_NAME.c_str());
@@ -253,14 +253,14 @@ namespace OpenGLModelDisplayer {
         std::cerr << "Could not bind uniform " << SHADER_UNIFORM_PROJECTION_MATRIX_NAME << ".\n";
       }
 
-      shader_uniform_inverse_model_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_INVERSE_MODEL_MATRIX_NAME.c_str());
-      if (shader_uniform_inverse_model_matrix_id == -1) {
-        std::cerr << "Could not bind uniform " << SHADER_UNIFORM_INVERSE_MODEL_MATRIX_NAME << ".\n";
+      shader_uniform_inverse_modelview_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_INVERSE_modelview_matrix_NAME.c_str());
+      if (shader_uniform_inverse_modelview_matrix_id == -1) {
+        std::cerr << "Could not bind uniform " << SHADER_UNIFORM_INVERSE_modelview_matrix_NAME << ".\n";
       }
 
-      shader_uniform_transpose_inverse_model_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_TRANSPOSE_INVERSE_MODEL_MATRIX_NAME.c_str());
-      if (shader_uniform_transpose_inverse_model_matrix_id == -1) {
-        std::cerr << "Could not bind uniform " << SHADER_UNIFORM_TRANSPOSE_INVERSE_MODEL_MATRIX_NAME << ".\n";
+      shader_uniform_transpose_inverse_modelview_matrix_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_TRANSPOSE_INVERSE_modelview_matrix_NAME.c_str());
+      if (shader_uniform_transpose_inverse_modelview_matrix_id == -1) {
+        std::cerr << "Could not bind uniform " << SHADER_UNIFORM_TRANSPOSE_INVERSE_modelview_matrix_NAME << ".\n";
       }
 
       shader_uniform_texture_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_TEXTURE_NAME.c_str());
@@ -284,15 +284,15 @@ namespace OpenGLModelDisplayer {
 
       glm::mat4 view_matrix = glm::lookAt(eye_position * eye_position_scale, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-      glm::mat4 model_matrix = glm::mat4(1.0f);
-      model_matrix = glm::rotate(model_matrix, glm::radians(rotated_degree), glm::vec3(0, 1, 0));
+      glm::mat4 modelview_matrix = glm::mat4(1.0f);
+      modelview_matrix = glm::rotate(modelview_matrix, glm::radians(rotated_degree), glm::vec3(0, 1, 0));
 
       glUseProgram(shader_program_id);
 
       glUniformMatrix4fv(shader_uniform_projection_matrix_id, 1, GL_FALSE, glm::value_ptr(projection_matrix));
       glUniformMatrix4fv(shader_uniform_view_matrix_id, 1, GL_FALSE, glm::value_ptr(view_matrix));
 
-      robot.Draw(model_matrix);
+      robot.Draw(modelview_matrix);
 
       SwapBuffers(hdc);
     }
@@ -303,10 +303,7 @@ namespace OpenGLModelDisplayer {
 
       RenderGLPanel();
 
-      robot.head_mesh_node_->mesh_->Rotate(glm::radians(45.0f * (FRAME_REFRESH_TIME / 1000.0f)), glm::vec3(0, 1, 0));
-      robot.left_upper_arm_mesh_node_->mesh_->Rotate(glm::radians(90.0f * (FRAME_REFRESH_TIME / 1000.0f)), glm::vec3(1, 0, 0));
-      robot.right_lower_arm_mesh_node_->mesh_->Rotate(glm::radians(60.0f * (FRAME_REFRESH_TIME / 1000.0f)), glm::vec3(0, 1, 0));
-      robot.right_upper_leg_mesh_node_->mesh_->Rotate(glm::radians(30.0f * (FRAME_REFRESH_TIME / 1000.0f)), glm::vec3(0, 1, 0));
+      robot.Update(FRAME_REFRESH_TIME);
     }
 
     System::Void GLPanelMouseWheel(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {

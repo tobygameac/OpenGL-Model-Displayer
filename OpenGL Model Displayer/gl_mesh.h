@@ -17,18 +17,18 @@ namespace OpenGLModelDisplayer {
   extern GLint shader_attribute_vertex_color_id;
   extern GLint shader_attribute_vertex_normal_id;
   extern GLint shader_attribute_vertex_uv_id;
-  extern GLint shader_uniform_model_matrix_id;
+  extern GLint shader_uniform_modelview_matrix_id;
   extern GLint shader_uniform_view_matrix_id;
   extern GLint shader_uniform_projection_matrix_id;
-  extern GLint shader_uniform_inverse_model_matrix_id;
-  extern GLint shader_uniform_transpose_inverse_model_matrix_id;
+  extern GLint shader_uniform_inverse_modelview_matrix_id;
+  extern GLint shader_uniform_transpose_inverse_modelview_matrix_id;
   extern GLint shader_uniform_texture_id;
 
   class GLMesh {
 
   public:
 
-    GLMesh() : vbo_vertices_(0), vbo_colors_(0), vbo_normals_(0), vbo_uvs_(0), local_model_matrix_(glm::mat4(1.0)), texture_id_(0) {
+    GLMesh() : vbo_vertices_(0), vbo_colors_(0), vbo_normals_(0), vbo_uvs_(0), local_modelview_matrix_(glm::mat4(1.0)), texture_id_(0) {
     }
 
     static void AddCube(std::shared_ptr<GLMesh> mesh, const float size) {
@@ -98,12 +98,29 @@ namespace OpenGLModelDisplayer {
       }
     }
 
+    void AdjustPosition() {
+
+      if (!vertices_.size()) {
+        return;
+      }
+
+      glm::vec3 adjust_amount(0.0, 0.0, 0.0);
+      for (const auto &vertex : vertices_) {
+        adjust_amount += vertex;
+      }
+      adjust_amount /= vertices_.size();
+
+      for (auto &vertex : vertices_) {
+        vertex -= adjust_amount;
+      }
+    }
+
     void Translate(const glm::vec3 &translation_vector) {
-      local_model_matrix_ = glm::translate(local_model_matrix_, translation_vector);
+      local_modelview_matrix_ = glm::translate(local_modelview_matrix_, translation_vector);
     }
 
     void Rotate(const float rotation_degree, const glm::vec3 &rotation_vector) {
-      local_model_matrix_ = glm::rotate(local_model_matrix_, rotation_degree, rotation_vector);
+      local_modelview_matrix_ = glm::rotate(local_modelview_matrix_, rotation_degree, rotation_vector);
     }
 
     void SetColor(const glm::vec3 &color) {
@@ -147,7 +164,7 @@ namespace OpenGLModelDisplayer {
       Draw(glm::mat4(1.0f));
     }
 
-    void Draw(const glm::mat4 &parent_model_matrix) {
+    void Draw(const glm::mat4 &parent_modelview_matrix) {
 
       if (vbo_vertices_) {
         glEnableVertexAttribArray(shader_attribute_vertex_position_id);
@@ -177,14 +194,14 @@ namespace OpenGLModelDisplayer {
       glBindTexture(GL_TEXTURE_2D, texture_id_);
       glUniform1i(shader_uniform_texture_id, 0);
 
-      glm::mat4 model_matrix = parent_model_matrix * local_model_matrix_;
-      glUniformMatrix4fv(shader_uniform_model_matrix_id, 1, GL_FALSE, glm::value_ptr(model_matrix));
+      glm::mat4 modelview_matrix = parent_modelview_matrix * local_modelview_matrix_;
+      glUniformMatrix4fv(shader_uniform_modelview_matrix_id, 1, GL_FALSE, glm::value_ptr(modelview_matrix));
 
-      glm::mat4 inverse_model_matrix = glm::inverse(model_matrix);
-      glUniformMatrix3fv(shader_uniform_inverse_model_matrix_id, 1, GL_FALSE, glm::value_ptr(inverse_model_matrix));
+      glm::mat4 inverse_modelview_matrix = glm::inverse(modelview_matrix);
+      glUniformMatrix3fv(shader_uniform_inverse_modelview_matrix_id, 1, GL_FALSE, glm::value_ptr(inverse_modelview_matrix));
 
-      glm::mat3 transpose_inverse_model_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
-      glUniformMatrix3fv(shader_uniform_transpose_inverse_model_matrix_id, 1, GL_FALSE, glm::value_ptr(transpose_inverse_model_matrix));
+      glm::mat3 transpose_inverse_modelview_matrix = glm::transpose(glm::inverse(glm::mat3(modelview_matrix)));
+      glUniformMatrix3fv(shader_uniform_transpose_inverse_modelview_matrix_id, 1, GL_FALSE, glm::value_ptr(transpose_inverse_modelview_matrix));
 
       glDrawArrays(GL_TRIANGLES, 0, vertices_.size());
 
@@ -213,7 +230,7 @@ namespace OpenGLModelDisplayer {
 
     GLuint texture_id_;
 
-    glm::mat4 local_model_matrix_;
+    glm::mat4 local_modelview_matrix_;
 
   private:
 

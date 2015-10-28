@@ -4,14 +4,14 @@ uniform mat4 model_matrix;
 uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
 
-uniform mat4 inverse_model_matrix;
+uniform mat4 inverse_modelview_matrix;
 
 uniform sampler2D texture;
 
 varying vec4 world_model_position;
 varying vec3 normal_direction;
 varying vec3 fragment_color;
-varying vec2 flipped_vertex_uv;
+varying vec2 fragment_vertex_uv;
 
 vec4 scene_ambient = vec4(0.2, 0.2, 0.2, 1.0);
 
@@ -25,7 +25,7 @@ struct Material {
 Material front_material = Material(
   vec4(0.2, 0.2, 0.2, 1.0),
   //vec4(fragment_color, 1.0),
-  texture2D(texture, flipped_vertex_uv),
+  texture2D(texture, fragment_vertex_uv),
   vec4(1.0, 1.0, 1.0, 1.0),
   5.0
   );
@@ -33,7 +33,7 @@ Material front_material = Material(
 Material back_material = Material(
   vec4(0.2, 0.2, 0.2, 1.0),
   //vec4(fragment_color * 0.2, 1.0),
-  texture2D(texture, flipped_vertex_uv) * 0.2,
+  texture2D(texture, fragment_vertex_uv) * 0.2,
   vec4(1.0, 1.0, 1.0, 1.0),
   5.0
   );
@@ -94,7 +94,7 @@ void main () {
     normal_direction = -normal_direction;
   }
 
-  vec3 view_direction = normalize(vec3(inverse_model_matrix * vec4(0.0, 0.0, 0.0, 1.0) - world_model_position));
+  vec3 view_direction = normalize(vec3(inverse_modelview_matrix * vec4(0.0, 0.0, 0.0, 1.0) - world_model_position));
   vec3 light_direction;
   float attenuation;
 
