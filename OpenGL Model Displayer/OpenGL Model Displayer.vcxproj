@@ -84,6 +84,7 @@
     <None Include="..\shader\vertex_shader.glsl" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="gl_animation.h" />
     <ClInclude Include="gl_form.h">
       <FileType>CppForm</FileType>
     </ClInclude>

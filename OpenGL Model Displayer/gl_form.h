@@ -55,9 +55,10 @@ namespace OpenGLModelDisplayer {
   GLint shader_uniform_texture_id;
 
   const int FPS = 120;
-  const int FRAME_REFRESH_TIME = (int)(1000.0 / FPS);
+  const float FRAME_REFRESH_TIME = 1000.0f / FPS;
 
-  glm::vec3 eye_position(3.0, 1.5, 3.0);
+  glm::vec3 eye_position(2.0, 1.5, 2.0);
+  glm::vec3 look_at_position(0.0, 0.0, 0.0);
 
   const float EYE_POSITION_SCALE_PER_SCROLLING = 0.9f;
   float eye_position_scale = 1.0;
@@ -92,8 +93,9 @@ namespace OpenGLModelDisplayer {
       InitializeOpenGL();
 
       this->MouseWheel += gcnew System::Windows::Forms::MouseEventHandler(this, &OpenGLModelDisplayer::GLForm::GLPanelMouseWheel);
+      this->KeyDown += gcnew System::Windows::Forms::KeyEventHandler(this, &OpenGLModelDisplayer::GLForm::GLPanelKeyDown);
 
-      timer1->Interval = FRAME_REFRESH_TIME;
+      timer1->Interval = (int)FRAME_REFRESH_TIME;
       timer1->Enabled = true;
 
       timer1->Tick += gcnew System::EventHandler(this, &OpenGLModelDisplayer::GLForm::Timer1Tick);
@@ -271,9 +273,11 @@ namespace OpenGLModelDisplayer {
       if (!robot.BuildMeshFromObjFile(DEFAULT_MODEL_OBJ_FILE_PATH)) {
         robot.BuildSimpleMesh();
       }
+
+      robot.WalkingMode();
     }
 
-    void RenderGLPanel() {
+    void RenderGLPanel() {      
       wglMakeCurrent(hdc, hrc);
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -282,7 +286,7 @@ namespace OpenGLModelDisplayer {
 
       glm::mat4 projection_matrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 100.0f);
 
-      glm::mat4 view_matrix = glm::lookAt(eye_position * eye_position_scale, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+      glm::mat4 view_matrix = glm::lookAt(eye_position * eye_position_scale, look_at_position, glm::vec3(0.0f, 1.0f, 0.0f));
 
       glm::mat4 modelview_matrix = glm::mat4(1.0f);
       modelview_matrix = glm::rotate(modelview_matrix, glm::radians(rotated_degree), glm::vec3(0, 1, 0));
@@ -300,10 +304,38 @@ namespace OpenGLModelDisplayer {
     System::Void Timer1Tick(System::Object^ sender, System::EventArgs^ e) {
       rotated_degree = rotated_degree + ROTATED_DEGREE_PER_SECOND * (FRAME_REFRESH_TIME / 1000.0f);
       rotated_degree = rotated_degree - ((rotated_degree > 360) ? 360 : 0);
+      rotated_degree = 0;
 
       RenderGLPanel();
 
       robot.Update(FRAME_REFRESH_TIME);
+    }
+
+    System::Void GLPanelKeyDown(System::Object^ sender, System::Windows::Forms::KeyEventArgs^ e) {
+      switch (e->KeyCode) {
+      case Keys::F1:
+        break;
+      case Keys::W:
+      case Keys::Up:
+        eye_position.y += 1;
+        look_at_position.y += 1;
+        break;
+      case Keys::A:
+      case Keys::Left:
+        eye_position.x -= 1;
+        look_at_position.x -= 1;
+        break;
+      case Keys::S:
+      case Keys::Down:
+        eye_position.y -= 1;
+        look_at_position.y -= 1;
+        break;
+      case Keys::D:
+      case Keys::Right:
+        eye_position.x += 1;
+        look_at_position.x += 1;
+        break;
+      }
     }
 
     System::Void GLPanelMouseWheel(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {

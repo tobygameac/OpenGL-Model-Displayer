@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -29,8 +30,14 @@ namespace OpenGLModelDisplayer {
       mesh_->Translate(translation_vector);
     }
 
-    void RotateMesh(const float rotation_degree, const glm::vec3 &rotation_vector) {
-      mesh_->Rotate(rotation_degree, rotation_vector);
+    void RotateMesh(const glm::vec3 &rotation_amount) {
+      mesh_->Rotate(glm::radians(rotation_amount.x), glm::vec3(1, 0, 0));
+      mesh_->Rotate(glm::radians(rotation_amount.y), glm::vec3(0, 1, 0));
+      mesh_->Rotate(glm::radians(rotation_amount.z), glm::vec3(0, 0, 1));
+    }
+
+    void RotateMesh(const float rotation_angle, const glm::vec3 &rotation_axis) {
+      mesh_->Rotate(rotation_angle, rotation_axis);
     }
 
     void CreateBoxMesh(const float width, const float length, const float height, const glm::vec3 &translation_vector, const glm::vec3 &color) {
@@ -117,25 +124,31 @@ namespace OpenGLModelDisplayer {
 
   class GLHierarchicalModel {
 
-  public:
+  protected:
 
     GLHierarchicalModel() : root_mesh_node_(new HierarchicalMeshNode()) {}
 
     virtual void Update(const float delta_time) {
+      for (const auto &update_function : update_functions_) {
+        update_function(delta_time);
+      }
     }
 
-    void Upload() {
+    virtual void Upload() {
       root_mesh_node_->Upload();
     }
 
-    void Draw() {
+    virtual void Draw() {
       root_mesh_node_->Draw(glm::mat4(1.0));
     }
 
-    void Draw(const glm::mat4 &root_modelview_matrix) {
+    virtual void Draw(const glm::mat4 &root_modelview_matrix) {
       root_mesh_node_->Draw(root_modelview_matrix);
     }
 
     std::shared_ptr<HierarchicalMeshNode> root_mesh_node_;
+
+    std::vector<std::function<void(const float)> > update_functions_;
+
   };
 }

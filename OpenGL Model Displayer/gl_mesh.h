@@ -119,8 +119,8 @@ namespace OpenGLModelDisplayer {
       local_modelview_matrix_ = glm::translate(local_modelview_matrix_, translation_vector);
     }
 
-    void Rotate(const float rotation_degree, const glm::vec3 &rotation_vector) {
-      local_modelview_matrix_ = glm::rotate(local_modelview_matrix_, rotation_degree, rotation_vector);
+    void Rotate(const float rotation_angle, const glm::vec3 &rotation_axis) {
+      local_modelview_matrix_ = glm::rotate(local_modelview_matrix_, rotation_angle, rotation_axis);
     }
 
     void SetColor(const glm::vec3 &color) {

@@ -44,6 +44,9 @@
     <ClInclude Include="gl_texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="gl_animation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="gl_form.cpp">
