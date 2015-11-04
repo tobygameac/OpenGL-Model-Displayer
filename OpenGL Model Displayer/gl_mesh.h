@@ -98,7 +98,19 @@ namespace OpenGLModelDisplayer {
       }
     }
 
-    void AdjustPosition() {
+    glm::mat4 GetModelviewMatrixWithAnimation() {
+      glm::mat4 modelview_matrix_with_animation = local_modelview_matrix_;
+
+      modelview_matrix_with_animation = glm::rotate(modelview_matrix_with_animation, glm::radians(rotation_animation_status_.GetCurrentStatus().x), glm::vec3(1, 0, 0));
+      modelview_matrix_with_animation = glm::rotate(modelview_matrix_with_animation, glm::radians(rotation_animation_status_.GetCurrentStatus().y), glm::vec3(0, 1, 0));
+      modelview_matrix_with_animation = glm::rotate(modelview_matrix_with_animation, glm::radians(rotation_animation_status_.GetCurrentStatus().z), glm::vec3(0, 0, 1));
+
+      modelview_matrix_with_animation = glm::translate(modelview_matrix_with_animation, translation_animation_status_.GetCurrentStatus());
+
+      return modelview_matrix_with_animation;
+    }
+
+    void AlignPositionToOrigin() {
 
       if (!vertices_.size()) {
         return;
@@ -194,7 +206,8 @@ namespace OpenGLModelDisplayer {
       glBindTexture(GL_TEXTURE_2D, texture_id_);
       glUniform1i(shader_uniform_texture_id, 0);
 
-      glm::mat4 modelview_matrix = parent_modelview_matrix * local_modelview_matrix_;
+      glm::mat4 modelview_matrix = parent_modelview_matrix * GetModelviewMatrixWithAnimation();
+
       glUniformMatrix4fv(shader_uniform_modelview_matrix_id, 1, GL_FALSE, glm::value_ptr(modelview_matrix));
 
       glm::mat4 inverse_modelview_matrix = glm::inverse(modelview_matrix);
@@ -230,7 +243,8 @@ namespace OpenGLModelDisplayer {
 
     GLuint texture_id_;
 
-    glm::mat4 local_modelview_matrix_;
+    AnimationStatus<glm::vec3> rotation_animation_status_;
+    AnimationStatus<glm::vec3> translation_animation_status_;
 
   private:
 
@@ -239,6 +253,7 @@ namespace OpenGLModelDisplayer {
     GLuint vbo_colors_;
     GLuint vbo_uvs_;
 
+    glm::mat4 local_modelview_matrix_;
   };
 
 }

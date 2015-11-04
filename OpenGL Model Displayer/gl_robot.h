@@ -55,11 +55,17 @@ namespace OpenGLModelDisplayer {
 
     void BuildSimpleMesh();
 
+    void ClearAnimationStatus();
+
     void WalkingMode();
 
-  private:
+    void RunningMode();
 
-    void Idle(const float delta_time);
+    void FlyingMode();
+
+    void StupidMode();
+
+  private:
 
     virtual void Upload();
 
@@ -78,10 +84,6 @@ namespace OpenGLModelDisplayer {
 
     std::shared_ptr<HierarchicalMeshNode> right_upper_leg_mesh_node_;
     std::shared_ptr<HierarchicalMeshNode> right_lower_leg_mesh_node_;
-
-    std::map<std::shared_ptr<HierarchicalMeshNode>, AnimationStatus<glm::vec3> > mesh_node_rotation_animation_status_;
-    std::map<std::shared_ptr<HierarchicalMeshNode>, AnimationStatus<glm::vec3> > mesh_node_translation_animation_status_;
-
   };
 
   GLRobot::GLRobot() :
@@ -117,7 +119,21 @@ namespace OpenGLModelDisplayer {
     left_upper_leg_mesh_node_->SetChildMeshNode(left_lower_leg_mesh_node_);
     right_upper_leg_mesh_node_->SetChildMeshNode(right_lower_leg_mesh_node_);
 
-    update_functions_.push_back(std::bind(&GLRobot::Idle, this, std::placeholders::_1));
+    all_mesh_nodes_.push_back(torso_mesh_node_);
+
+    all_mesh_nodes_.push_back(head_mesh_node_);
+
+    all_mesh_nodes_.push_back(left_upper_arm_mesh_node_);
+    all_mesh_nodes_.push_back(left_lower_arm_mesh_node_);
+
+    all_mesh_nodes_.push_back(right_upper_arm_mesh_node_);
+    all_mesh_nodes_.push_back(right_lower_arm_mesh_node_);
+
+    all_mesh_nodes_.push_back(left_upper_leg_mesh_node_);
+    all_mesh_nodes_.push_back(left_lower_leg_mesh_node_);
+
+    all_mesh_nodes_.push_back(right_upper_leg_mesh_node_);
+    all_mesh_nodes_.push_back(right_lower_leg_mesh_node_);
   }
 
   void GLRobot::Update(const float delta_time) {
@@ -132,11 +148,64 @@ namespace OpenGLModelDisplayer {
     GLHierarchicalModel::Draw(root_modelview_matrix);
   }
 
+  void GLRobot::ClearAnimationStatus() {
+    for (const auto &mesh_node : all_mesh_nodes_) {
+      mesh_node->ClearAnimationStatus();
+    }
+  }
+
   void GLRobot::WalkingMode() {
-    mesh_node_rotation_animation_status_[head_mesh_node_] = AnimationStatus<glm::vec3>(glm::vec3(0, 30, 0), glm::vec3(0, -30, 0), glm::vec3(0, 0, 0), glm::vec3(0, 15, 0));
-    mesh_node_rotation_animation_status_[left_lower_arm_mesh_node_] = AnimationStatus<glm::vec3>(glm::vec3(15, 0, 0), glm::vec3(-15, 0, 0), glm::vec3(0, 0, 0), glm::vec3(30, 0, 0));
-    mesh_node_rotation_animation_status_[right_upper_arm_mesh_node_] = AnimationStatus<glm::vec3>(glm::vec3(30, 0, 0), glm::vec3(-30, 0, 0), glm::vec3(0, 0, 0), glm::vec3(90, 0, 0));
-    mesh_node_rotation_animation_status_[right_lower_leg_mesh_node_] = AnimationStatus<glm::vec3>(glm::vec3(30, 0, 0), glm::vec3(-30, 0, 0), glm::vec3(0, 0, 0), glm::vec3(60, 0, 0));
+    ClearAnimationStatus();
+
+    torso_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 1, 0), glm::vec3(0, -1, 0), glm::vec3(0, 3, 0)));
+
+    head_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 15, 0), glm::vec3(0, -15, 0), glm::vec3(0, 15, 0)));
+
+    left_upper_arm_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(10, 0, 0), glm::vec3(-10, 0, 0), glm::vec3(-45, 0, 0)));
+    right_upper_arm_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(10, 0, 0), glm::vec3(-10, 0, 0), glm::vec3(45, 0, 0)));
+
+    left_upper_leg_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(10, 0, 0), glm::vec3(-10, 0, 0), glm::vec3(45, 0, 0)));
+    right_upper_leg_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(10, 0, 0), glm::vec3(-10, 0, 0), glm::vec3(-45, 0, 0)));
+  }
+
+  void GLRobot::RunningMode() {
+    ClearAnimationStatus();
+
+    torso_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 5, 0), glm::vec3(0, -5, 0), glm::vec3(0, 15, 0)));
+
+    head_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 15, 0), glm::vec3(0, -15, 0), glm::vec3(0, 30, 0)));
+
+    left_upper_arm_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(20, 0, 0), glm::vec3(-20, 0, 0), glm::vec3(-80, 0, 0)));
+    right_upper_arm_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(20, 0, 0), glm::vec3(-20, 0, 0), glm::vec3(80, 0, 0)));
+
+    left_lower_arm_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 0, 0), glm::vec3(-5, 0, 0), glm::vec3(15, 0, 0)));
+    right_lower_arm_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 0, 0), glm::vec3(-5, 0, 0), glm::vec3(15, 0, 0)));
+
+    left_upper_leg_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(30, 0, 0), glm::vec3(-30, 0, 0), glm::vec3(120, 0, 0)));
+    right_upper_leg_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(30, 0, 0), glm::vec3(-30, 0, 0), glm::vec3(-120, 0, 0)));
+  }
+
+  void GLRobot::FlyingMode() {
+    ClearAnimationStatus();
+
+    left_upper_arm_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 0, 20), glm::vec3(0, 0, -20), glm::vec3(0, 0, -80)));
+    right_upper_arm_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 0, 20), glm::vec3(0, 0, -20), glm::vec3(0, 0, 80)));
+
+    torso_mesh_node_->SetTranslationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 0.2, 0), glm::vec3(0, 0, 0), glm::vec3(0, 0.4, 0)));
+  }
+
+  void GLRobot::StupidMode() {
+    ClearAnimationStatus();
+
+    torso_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 360, 0), glm::vec3(0, 0, 0), glm::vec3(0, 360, 0)));
+
+    left_upper_arm_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 0, 20), glm::vec3(0, 0, -20), glm::vec3(0, 0, 80)));
+    right_upper_arm_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 0, 20), glm::vec3(0, 0, -20), glm::vec3(0, 0, 80)));
+
+    left_upper_leg_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 0, 0), glm::vec3(-60, 0, 0), glm::vec3(120, 0, 0)));
+    right_upper_leg_mesh_node_->SetRotationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 0, 0), glm::vec3(-60, 0, 0), glm::vec3(120, 0, 0)));
+
+    torso_mesh_node_->SetTranslationAnimationStatus(AnimationStatus<glm::vec3>(glm::vec3(0, 0.2, 0), glm::vec3(0, 0, 0), glm::vec3(0, 0.4, 0)));
   }
 
   bool GLRobot::BuildMeshFromObjFile(const std::string &file_path) {
@@ -326,16 +395,16 @@ namespace OpenGLModelDisplayer {
     }
 
     // temp
-    torso_mesh_node_->AdjustMeshPosition();
-    head_mesh_node_->AdjustMeshPosition();
-    left_upper_arm_mesh_node_->AdjustMeshPosition();
-    left_lower_arm_mesh_node_->AdjustMeshPosition();
-    right_upper_arm_mesh_node_->AdjustMeshPosition();
-    right_lower_arm_mesh_node_->AdjustMeshPosition();
-    left_upper_leg_mesh_node_->AdjustMeshPosition();
-    left_lower_leg_mesh_node_->AdjustMeshPosition();
-    right_upper_leg_mesh_node_->AdjustMeshPosition();
-    right_lower_leg_mesh_node_->AdjustMeshPosition();
+    torso_mesh_node_->AlignPositionToOrigin();
+    head_mesh_node_->AlignPositionToOrigin();
+    left_upper_arm_mesh_node_->AlignPositionToOrigin();
+    left_lower_arm_mesh_node_->AlignPositionToOrigin();
+    right_upper_arm_mesh_node_->AlignPositionToOrigin();
+    right_lower_arm_mesh_node_->AlignPositionToOrigin();
+    left_upper_leg_mesh_node_->AlignPositionToOrigin();
+    left_lower_leg_mesh_node_->AlignPositionToOrigin();
+    right_upper_leg_mesh_node_->AlignPositionToOrigin();
+    right_lower_leg_mesh_node_->AlignPositionToOrigin();
 
     root_mesh_node_->CreateBoxMesh(5, 0.001f, 5, glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
 
@@ -384,13 +453,6 @@ namespace OpenGLModelDisplayer {
     left_lower_leg_mesh_node_->CreateBoxMesh(1.5f, 3, 1.5f, glm::vec3(0, -3, 0), glm::vec3(1, 1, 0));
 
     right_lower_leg_mesh_node_->CreateBoxMesh(1.5f, 3, 1.4f, glm::vec3(0, -3, 0), glm::vec3(1, 1, 0));
-  }
-
-  void GLRobot::Idle(const float delta_time) {
-    head_mesh_node_->RotateMesh(mesh_node_rotation_animation_status_[head_mesh_node_].Update(delta_time));
-    left_lower_arm_mesh_node_->RotateMesh(mesh_node_rotation_animation_status_[left_lower_arm_mesh_node_].Update(delta_time));
-    right_upper_arm_mesh_node_->RotateMesh(mesh_node_rotation_animation_status_[right_upper_arm_mesh_node_].Update(delta_time));
-    right_lower_leg_mesh_node_->RotateMesh(mesh_node_rotation_animation_status_[right_lower_leg_mesh_node_].Update(delta_time));
   }
 
   void GLRobot::Upload() {

@@ -22,18 +22,12 @@ namespace OpenGLModelDisplayer {
     HierarchicalMeshNode(std::shared_ptr<GLMesh> mesh, std::shared_ptr<HierarchicalMeshNode> next_mesh_node, std::shared_ptr<HierarchicalMeshNode> child_mesh_root) : mesh_(mesh), next_mesh_node_(next_mesh_node), child_mesh_node_(child_mesh_root) {
     }
 
-    void AdjustMeshPosition() {
-      mesh_->AdjustPosition();
+    void AlignPositionToOrigin() {
+      mesh_->AlignPositionToOrigin();
     }
 
     void TranslateMesh(const glm::vec3 &translation_vector) {
       mesh_->Translate(translation_vector);
-    }
-
-    void RotateMesh(const glm::vec3 &rotation_amount) {
-      mesh_->Rotate(glm::radians(rotation_amount.x), glm::vec3(1, 0, 0));
-      mesh_->Rotate(glm::radians(rotation_amount.y), glm::vec3(0, 1, 0));
-      mesh_->Rotate(glm::radians(rotation_amount.z), glm::vec3(0, 0, 1));
     }
 
     void RotateMesh(const float rotation_angle, const glm::vec3 &rotation_axis) {
@@ -69,11 +63,29 @@ namespace OpenGLModelDisplayer {
       return &(mesh_->texture_id_);
     }
 
-    void SetNextMeshNode(std::shared_ptr<HierarchicalMeshNode> next_mesh_node) {
+    void ClearAnimationStatus() {
+      mesh_->rotation_animation_status_ = AnimationStatus<glm::vec3>();
+      mesh_->translation_animation_status_ = AnimationStatus<glm::vec3>();
+    }
+
+    void SetRotationAnimationStatus(const AnimationStatus<glm::vec3> &rotation_animation_status) {
+      mesh_->rotation_animation_status_ = rotation_animation_status;
+    }
+
+    void SetTranslationAnimationStatus(const AnimationStatus<glm::vec3> &translation_animation_status) {
+      mesh_->translation_animation_status_ = translation_animation_status;
+    }
+
+    void UpdateAnimationStatus(const float delta_time) {
+      mesh_->rotation_animation_status_.Update(delta_time);
+      mesh_->translation_animation_status_.Update(delta_time);
+    }
+
+    void SetNextMeshNode(const std::shared_ptr<HierarchicalMeshNode> next_mesh_node) {
       next_mesh_node_ = next_mesh_node;
     }
 
-    void SetChildMeshNode(std::shared_ptr<HierarchicalMeshNode> child_mesh_node) {
+    void SetChildMeshNode(const std::shared_ptr<HierarchicalMeshNode> child_mesh_node) {
       child_mesh_node_ = child_mesh_node;
     }
 
@@ -109,7 +121,7 @@ namespace OpenGLModelDisplayer {
       }
 
       if (child_mesh_node_ != nullptr) {
-        glm::mat4 modelview_matrix = parent_modelview_matrix * mesh_->local_modelview_matrix_;
+        glm::mat4 modelview_matrix = parent_modelview_matrix * mesh_->GetModelviewMatrixWithAnimation();
         child_mesh_node_->Draw(modelview_matrix);
       }
     }
@@ -126,11 +138,13 @@ namespace OpenGLModelDisplayer {
 
   protected:
 
-    GLHierarchicalModel() : root_mesh_node_(new HierarchicalMeshNode()) {}
+    GLHierarchicalModel() : root_mesh_node_(new HierarchicalMeshNode()) {
+      all_mesh_nodes_.push_back(root_mesh_node_);
+    }
 
     virtual void Update(const float delta_time) {
-      for (const auto &update_function : update_functions_) {
-        update_function(delta_time);
+      for (const auto &mesh_node : all_mesh_nodes_) {
+        mesh_node->UpdateAnimationStatus(delta_time);
       }
     }
 
@@ -148,7 +162,6 @@ namespace OpenGLModelDisplayer {
 
     std::shared_ptr<HierarchicalMeshNode> root_mesh_node_;
 
-    std::vector<std::function<void(const float)> > update_functions_;
-
+    std::vector<std::shared_ptr<HierarchicalMeshNode> > all_mesh_nodes_;
   };
 }

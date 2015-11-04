@@ -57,16 +57,19 @@ namespace OpenGLModelDisplayer {
   const int FPS = 120;
   const float FRAME_REFRESH_TIME = 1000.0f / FPS;
 
-  glm::vec3 eye_position(2.0, 1.5, 2.0);
+  glm::vec3 eye_position(0, 1.5, 1.5);
   glm::vec3 look_at_position(0.0, 0.0, 0.0);
 
   const float EYE_POSITION_SCALE_PER_SCROLLING = 0.9f;
   float eye_position_scale = 1.0;
 
-  const float ROTATED_DEGREE_PER_SECOND = 30.0;
-  float rotated_degree;
+  const glm::vec3 ROTATED_DEGREE_PER_SECOND(30.0, 30.0, 30.0);
+  glm::vec3 rotated_degree;
 
   GLRobot robot;
+
+  int mouse_last_x;
+  int mouse_last_y;
 
   using namespace System::Runtime::InteropServices;
 
@@ -93,13 +96,14 @@ namespace OpenGLModelDisplayer {
       InitializeOpenGL();
 
       this->MouseWheel += gcnew System::Windows::Forms::MouseEventHandler(this, &OpenGLModelDisplayer::GLForm::GLPanelMouseWheel);
+      this->gl_panel->MouseMove += gcnew System::Windows::Forms::MouseEventHandler(this, &OpenGLModelDisplayer::GLForm::GLPanelMouseMove);
       this->KeyDown += gcnew System::Windows::Forms::KeyEventHandler(this, &OpenGLModelDisplayer::GLForm::GLPanelKeyDown);
 
-      timer1->Interval = (int)FRAME_REFRESH_TIME;
-      timer1->Enabled = true;
+      frame_refresh_timer->Interval = (int)FRAME_REFRESH_TIME;
+      frame_refresh_timer->Enabled = true;
 
-      timer1->Tick += gcnew System::EventHandler(this, &OpenGLModelDisplayer::GLForm::Timer1Tick);
-      timer1->Start();
+      frame_refresh_timer->Tick += gcnew System::EventHandler(this, &OpenGLModelDisplayer::GLForm::FrameRefreshTimerTick);
+      frame_refresh_timer->Start();
     }
 
   protected:
@@ -115,7 +119,7 @@ namespace OpenGLModelDisplayer {
   private:
 
     System::Windows::Forms::Panel^ gl_panel;
-    System::Windows::Forms::Timer^ timer1;
+    System::Windows::Forms::Timer^ frame_refresh_timer;
     System::ComponentModel::IContainer^ components;
 
     static HWND hwnd;
@@ -277,7 +281,7 @@ namespace OpenGLModelDisplayer {
       robot.WalkingMode();
     }
 
-    void RenderGLPanel() {      
+    void RenderGLPanel() {
       wglMakeCurrent(hdc, hrc);
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -289,7 +293,10 @@ namespace OpenGLModelDisplayer {
       glm::mat4 view_matrix = glm::lookAt(eye_position * eye_position_scale, look_at_position, glm::vec3(0.0f, 1.0f, 0.0f));
 
       glm::mat4 modelview_matrix = glm::mat4(1.0f);
-      modelview_matrix = glm::rotate(modelview_matrix, glm::radians(rotated_degree), glm::vec3(0, 1, 0));
+
+      modelview_matrix = glm::rotate(modelview_matrix, glm::radians(rotated_degree.x), glm::vec3(1, 0, 0));
+      modelview_matrix = glm::rotate(modelview_matrix, glm::radians(rotated_degree.y), glm::vec3(0, 1, 0));
+      modelview_matrix = glm::rotate(modelview_matrix, glm::radians(rotated_degree.z), glm::vec3(0, 0, 1));
 
       glUseProgram(shader_program_id);
 
@@ -301,10 +308,8 @@ namespace OpenGLModelDisplayer {
       SwapBuffers(hdc);
     }
 
-    System::Void Timer1Tick(System::Object^ sender, System::EventArgs^ e) {
-      rotated_degree = rotated_degree + ROTATED_DEGREE_PER_SECOND * (FRAME_REFRESH_TIME / 1000.0f);
-      rotated_degree = rotated_degree - ((rotated_degree > 360) ? 360 : 0);
-      rotated_degree = 0;
+    System::Void FrameRefreshTimerTick(System::Object^ sender, System::EventArgs^ e) {
+      //rotated_degree = rotated_degree + ROTATED_DEGREE_PER_SECOND * (FRAME_REFRESH_TIME / 1000.0f);
 
       RenderGLPanel();
 
@@ -314,6 +319,16 @@ namespace OpenGLModelDisplayer {
     System::Void GLPanelKeyDown(System::Object^ sender, System::Windows::Forms::KeyEventArgs^ e) {
       switch (e->KeyCode) {
       case Keys::F1:
+        robot.WalkingMode();
+        break;
+      case Keys::F2:
+        robot.RunningMode();
+        break;
+      case Keys::F3:
+        robot.FlyingMode();
+        break;
+      case Keys::F4:
+        robot.StupidMode();
         break;
       case Keys::W:
       case Keys::Up:
@@ -342,6 +357,15 @@ namespace OpenGLModelDisplayer {
       eye_position_scale *= (e->Delta < 0) ? (1.0f / EYE_POSITION_SCALE_PER_SCROLLING) : EYE_POSITION_SCALE_PER_SCROLLING;
     }
 
+    System::Void GLPanelMouseMove(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
+      if (e->Button == System::Windows::Forms::MouseButtons::Left || e->Button == System::Windows::Forms::MouseButtons::Right) {
+        rotated_degree.y += (e->X - mouse_last_x);
+        rotated_degree.x += (e->Y - mouse_last_y);
+      }
+      mouse_last_x = e->X;
+      mouse_last_y = e->Y;
+    }
+
     /// <summary>
     /// Required designer variable.
     /// </summary>
@@ -355,7 +379,7 @@ namespace OpenGLModelDisplayer {
     void InitializeComponent(void) {
       this->components = (gcnew System::ComponentModel::Container());
       this->gl_panel = (gcnew System::Windows::Forms::Panel());
-      this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
+      this->frame_refresh_timer = (gcnew System::Windows::Forms::Timer(this->components));
       this->SuspendLayout();
       // 
       // gl_panel
