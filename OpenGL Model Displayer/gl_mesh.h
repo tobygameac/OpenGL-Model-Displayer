@@ -101,30 +101,42 @@ namespace OpenGLModelDisplayer {
     glm::mat4 GetModelviewMatrixWithAnimation() {
       glm::mat4 modelview_matrix_with_animation = local_modelview_matrix_;
 
-      modelview_matrix_with_animation = glm::rotate(modelview_matrix_with_animation, glm::radians(rotation_animation_status_.GetCurrentStatus().x), glm::vec3(1, 0, 0));
-      modelview_matrix_with_animation = glm::rotate(modelview_matrix_with_animation, glm::radians(rotation_animation_status_.GetCurrentStatus().y), glm::vec3(0, 1, 0));
-      modelview_matrix_with_animation = glm::rotate(modelview_matrix_with_animation, glm::radians(rotation_animation_status_.GetCurrentStatus().z), glm::vec3(0, 0, 1));
+      glm::vec3 rotation_animation_status = rotation_animation_.AnimationStatus();
+      glm::vec3 translation_animation_status = translation_animation_.AnimationStatus();
 
-      modelview_matrix_with_animation = glm::translate(modelview_matrix_with_animation, translation_animation_status_.GetCurrentStatus());
+      modelview_matrix_with_animation = glm::rotate(modelview_matrix_with_animation, glm::radians(rotation_animation_status.x), glm::vec3(1, 0, 0));
+      modelview_matrix_with_animation = glm::rotate(modelview_matrix_with_animation, glm::radians(rotation_animation_status.y), glm::vec3(0, 1, 0));
+      modelview_matrix_with_animation = glm::rotate(modelview_matrix_with_animation, glm::radians(rotation_animation_status.z), glm::vec3(0, 0, 1));
+
+      modelview_matrix_with_animation = glm::translate(modelview_matrix_with_animation, translation_animation_status);
 
       return modelview_matrix_with_animation;
     }
 
-    void AlignPositionToOrigin() {
+    void UpdateAnimationStatus(const float delta_time) {
+      rotation_animation_.Update(delta_time);
+      translation_animation_.Update(delta_time);
+    }
+
+    glm::vec3 AlignPositionToOrigin(const glm::vec3 parent_translation_vector) {
 
       if (!vertices_.size()) {
-        return;
+        return glm::vec3(0, 0, 0);
       }
 
-      glm::vec3 adjust_amount(0.0, 0.0, 0.0);
+      glm::vec3 center_position(0, 0, 0);
       for (const auto &vertex : vertices_) {
-        adjust_amount += vertex;
+        center_position += vertex;
       }
-      adjust_amount /= vertices_.size();
+      center_position /= vertices_.size();
 
       for (auto &vertex : vertices_) {
-        vertex -= adjust_amount;
+        vertex -= center_position;
       }
+
+      glm::vec3 adjust_amount = center_position - parent_translation_vector;
+      Translate(adjust_amount);
+      return adjust_amount;
     }
 
     void Translate(const glm::vec3 &translation_vector) {
@@ -243,8 +255,8 @@ namespace OpenGLModelDisplayer {
 
     GLuint texture_id_;
 
-    AnimationStatus<glm::vec3> rotation_animation_status_;
-    AnimationStatus<glm::vec3> translation_animation_status_;
+    Animation<glm::vec3> rotation_animation_;
+    Animation<glm::vec3> translation_animation_;
 
   private:
 

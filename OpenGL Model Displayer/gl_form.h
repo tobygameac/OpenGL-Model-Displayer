@@ -7,6 +7,7 @@
 #include <ctime>
 
 #include <algorithm>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -54,10 +55,10 @@ namespace OpenGLModelDisplayer {
   GLint shader_uniform_transpose_inverse_modelview_matrix_id;
   GLint shader_uniform_texture_id;
 
-  const int FPS = 120;
+  const int FPS = 60;
   const float FRAME_REFRESH_TIME = 1000.0f / FPS;
 
-  glm::vec3 eye_position(0, 1.5, 1.5);
+  glm::vec3 eye_position(0, 1, 1);
   glm::vec3 look_at_position(0.0, 0.0, 0.0);
 
   const float EYE_POSITION_SCALE_PER_SCROLLING = 0.9f;
@@ -70,6 +71,8 @@ namespace OpenGLModelDisplayer {
 
   int mouse_last_x;
   int mouse_last_y;
+
+  std::chrono::steady_clock::time_point last_clock = std::chrono::steady_clock::now();
 
   using namespace System::Runtime::InteropServices;
 
@@ -101,6 +104,7 @@ namespace OpenGLModelDisplayer {
 
       frame_refresh_timer->Interval = (int)FRAME_REFRESH_TIME;
       frame_refresh_timer->Enabled = true;
+
 
       frame_refresh_timer->Tick += gcnew System::EventHandler(this, &OpenGLModelDisplayer::GLForm::FrameRefreshTimerTick);
       frame_refresh_timer->Start();
@@ -144,8 +148,8 @@ namespace OpenGLModelDisplayer {
 
       // Set pixel format
       PIXELFORMATDESCRIPTOR pfd;
-      pfd.nVersion = 1; 
-      pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER; 
+      pfd.nVersion = 1;
+      pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
       pfd.iPixelType = (byte)(PFD_TYPE_RGBA);
       pfd.cColorBits = 32;
       pfd.cDepthBits = 32;
@@ -155,7 +159,7 @@ namespace OpenGLModelDisplayer {
 
       // Create OpenGL Rendering Context
       hrc = (wglCreateContext(hdc));
-      if (!hrc)  {
+      if (!hrc) {
         std::cerr << "wglCreateContext failed.\n";
       }
 
@@ -313,7 +317,11 @@ namespace OpenGLModelDisplayer {
 
       RenderGLPanel();
 
-      robot.Update(FRAME_REFRESH_TIME);
+      std::chrono::steady_clock::time_point current_clock = std::chrono::steady_clock::now();
+      float elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_clock - last_clock).count();
+      last_clock = current_clock;
+
+      robot.Update(elapsed_time);
     }
 
     System::Void GLPanelKeyDown(System::Object^ sender, System::Windows::Forms::KeyEventArgs^ e) {
@@ -354,7 +362,7 @@ namespace OpenGLModelDisplayer {
     }
 
     System::Void GLPanelMouseWheel(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
-      eye_position_scale *= (e->Delta < 0) ? (1.0f / EYE_POSITION_SCALE_PER_SCROLLING) : EYE_POSITION_SCALE_PER_SCROLLING;
+      eye_position_scale *= (e->Delta < 0)?(1.0f / EYE_POSITION_SCALE_PER_SCROLLING):EYE_POSITION_SCALE_PER_SCROLLING;
     }
 
     System::Void GLPanelMouseMove(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
@@ -403,6 +411,7 @@ namespace OpenGLModelDisplayer {
 #pragma endregion
   private:
 
-    System::Void GLForm_Load(System::Object^  sender, System::EventArgs^ e) {}
+    System::Void GLForm_Load(System::Object^  sender, System::EventArgs^ e) {
+    }
   };
 }

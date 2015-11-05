@@ -15,15 +15,34 @@ namespace OpenGLModelDisplayer {
   class HierarchicalMeshNode {
 
   public:
-    HierarchicalMeshNode() : mesh_(new GLMesh()), next_mesh_node_(nullptr), child_mesh_node_(nullptr) {}
+    HierarchicalMeshNode() : mesh_(new GLMesh()), next_mesh_node_(nullptr), child_mesh_node_(nullptr) {
+    }
 
-    HierarchicalMeshNode(std::shared_ptr<GLMesh> mesh) : mesh_(mesh), next_mesh_node_(nullptr), child_mesh_node_(nullptr) {}
+    HierarchicalMeshNode(std::shared_ptr<GLMesh> mesh) : mesh_(mesh), next_mesh_node_(nullptr), child_mesh_node_(nullptr) {
+    }
 
     HierarchicalMeshNode(std::shared_ptr<GLMesh> mesh, std::shared_ptr<HierarchicalMeshNode> next_mesh_node, std::shared_ptr<HierarchicalMeshNode> child_mesh_root) : mesh_(mesh), next_mesh_node_(next_mesh_node), child_mesh_node_(child_mesh_root) {
     }
 
     void AlignPositionToOrigin() {
-      mesh_->AlignPositionToOrigin();
+      AlignPositionToOrigin(glm::vec3(0, 0, 0));
+    }
+
+    void AlignPositionToOrigin(const glm::vec3 parent_translation_vector) {
+      if (mesh_ == nullptr) {
+        return;
+      }
+
+      glm::vec3 adjust_amount = mesh_->AlignPositionToOrigin(parent_translation_vector);
+
+      if (next_mesh_node_ != nullptr) {
+        next_mesh_node_->AlignPositionToOrigin(parent_translation_vector);
+      }
+
+      if (child_mesh_node_ != nullptr) {
+        glm::vec3 translation_vector = parent_translation_vector + adjust_amount;
+        child_mesh_node_->AlignPositionToOrigin(translation_vector);
+      }
     }
 
     void TranslateMesh(const glm::vec3 &translation_vector) {
@@ -63,22 +82,28 @@ namespace OpenGLModelDisplayer {
       return &(mesh_->texture_id_);
     }
 
-    void ClearAnimationStatus() {
-      mesh_->rotation_animation_status_ = AnimationStatus<glm::vec3>();
-      mesh_->translation_animation_status_ = AnimationStatus<glm::vec3>();
+    void ClearAnimation() {
+      mesh_->rotation_animation_ = mesh_->translation_animation_ = Animation<glm::vec3>();
     }
 
-    void SetRotationAnimationStatus(const AnimationStatus<glm::vec3> &rotation_animation_status) {
-      mesh_->rotation_animation_status_ = rotation_animation_status;
+    void SetRotationAnimation(const Animation<glm::vec3> &rotation_animation) {
+      mesh_->rotation_animation_ = rotation_animation;
     }
 
-    void SetTranslationAnimationStatus(const AnimationStatus<glm::vec3> &translation_animation_status) {
-      mesh_->translation_animation_status_ = translation_animation_status;
+    void AddRotationAnimationAction(const AnimationAction<glm::vec3> &rotation_animation_action) {
+      mesh_->rotation_animation_.AddAnimationAction(rotation_animation_action);
+    }
+
+    void SetTranslationAnimation(const Animation<glm::vec3> &translation_animation) {
+      mesh_->translation_animation_ = translation_animation;
+    }
+
+    void AddTranslationAnimationAction(const AnimationAction<glm::vec3> &translation_animation_action) {
+      mesh_->translation_animation_.AddAnimationAction(translation_animation_action);
     }
 
     void UpdateAnimationStatus(const float delta_time) {
-      mesh_->rotation_animation_status_.Update(delta_time);
-      mesh_->translation_animation_status_.Update(delta_time);
+      mesh_->UpdateAnimationStatus(delta_time);
     }
 
     void SetNextMeshNode(const std::shared_ptr<HierarchicalMeshNode> next_mesh_node) {
