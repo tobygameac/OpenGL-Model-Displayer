@@ -278,11 +278,9 @@ namespace OpenGLModelDisplayer {
         std::cerr << "Could not bind uniform " << SHADER_UNIFORM_TEXTURE_NAME << ".\n";
       }
 
-      if (!robot.BuildMeshFromObjFile(DEFAULT_MODEL_OBJ_FILE_PATH)) {
+      if (!robot.BuildMeshFromOptimusPrimeObjFile(DEFAULT_MODEL_OBJ_FILE_PATH)) {
         robot.BuildSimpleMesh();
       }
-
-      robot.WalkingMode();
     }
 
     void RenderGLPanel() {
@@ -327,15 +325,18 @@ namespace OpenGLModelDisplayer {
     System::Void GLPanelKeyDown(System::Object^ sender, System::Windows::Forms::KeyEventArgs^ e) {
       switch (e->KeyCode) {
       case Keys::F1:
-        robot.WalkingMode();
+        robot.ClearAnimation();
         break;
       case Keys::F2:
-        robot.RunningMode();
+        robot.WalkingMode();
         break;
       case Keys::F3:
-        robot.FlyingMode();
+        robot.RunningMode();
         break;
       case Keys::F4:
+        robot.FlyingMode();
+        break;
+      case Keys::F5:
         robot.StupidMode();
         break;
       case Keys::W:

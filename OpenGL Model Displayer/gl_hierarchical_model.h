@@ -62,28 +62,36 @@ namespace OpenGLModelDisplayer {
       mesh_->Upload();
     }
 
-    std::vector<glm::vec3> &GetMeshVertices() {
-      return mesh_->vertices_;
+    void AddMeshVertex(const glm::vec3 &mesh_vertex) {
+      mesh_->vertices_.push_back(mesh_vertex);
     }
 
-    std::vector<glm::vec3> &GetMeshColors() {
-      return mesh_->colors_;
+    void AddMeshColor(const glm::vec3 &mesh_color) {
+      mesh_->colors_.push_back(mesh_color);;
     }
 
-    std::vector<glm::vec3> &GetMeshNormals() {
-      return mesh_->normals_;
+    void AddMeshNormal(const glm::vec3 &mesh_normal) {
+      mesh_->normals_.push_back(mesh_normal);
     }
 
-    std::vector<glm::vec2> &GetMeshUvs() {
-      return mesh_->uvs_;
+    void AddMeshUv(const glm::vec2 &mesh_uv) {
+      mesh_->uvs_.push_back(mesh_uv);
     }
 
-    GLuint *GetMeshTextureId() {
-      return &(mesh_->texture_id_);
+    void SetMeshTextureId(const GLuint texture_id) {
+      mesh_->texture_id_ = texture_id;
     }
 
     void ClearAnimation() {
       mesh_->rotation_animation_ = mesh_->translation_animation_ = Animation<glm::vec3>();
+    }
+
+    void SetDefaultRotationAnimationStatus(const glm::vec3 &defalut_rotation_animation_status) {
+      mesh_->rotation_animation_.SetDefaultAnimationStatus(defalut_rotation_animation_status);
+    }
+
+    void SetDefaultTranslationAnimationStatus(const glm::vec3 &defalut_translation_animation_status) {
+      mesh_->translation_animation_.SetDefaultAnimationStatus(defalut_translation_animation_status);
     }
 
     void SetRotationAnimation(const Animation<glm::vec3> &rotation_animation) {
@@ -100,6 +108,14 @@ namespace OpenGLModelDisplayer {
 
     void AddTranslationAnimationAction(const AnimationAction<glm::vec3> &translation_animation_action) {
       mesh_->translation_animation_.AddAnimationAction(translation_animation_action);
+    }
+
+    void AddRotationAnimationDelay(const float time_delay) {
+      mesh_->rotation_animation_.AddDelay(time_delay * 1000);
+    }
+
+    void AddTranslationAnimationDelay(const float time_delay) {
+      mesh_->translation_animation_.AddDelay(time_delay * 1000);
     }
 
     void UpdateAnimationStatus(const float delta_time) {

@@ -35,7 +35,9 @@ namespace OpenGLModelDisplayer {
 
   public:
 
-    Animation() : previous_animation_status_(), animation_status_(), current_action_index_(0), time_used_(0), is_loop_(true), is_playing_(true) {
+    Animation() : defalut_animation_status_(), previous_animation_status_(), animation_status_(),
+      current_action_index_(0), time_used_(0), time_delayed_(0),
+      is_loop_(true), is_playing_(true) {
     }
 
     Animation(bool is_loop) : Animation(), is_loop_(is_loop) {
@@ -47,12 +49,30 @@ namespace OpenGLModelDisplayer {
     Animation(const std::vector<AnimationAction<T> > &animation_action_list, bool is_loop) : Animation(animation_action_list), is_loop_(is_loop) {
     }
 
+    void SetDefaultAnimationStatus(const T &default_animation_status) {
+      defalut_animation_status_ = default_animation_status;
+    }
+
+    void AddDelay(const float time_delayed) {
+      time_delayed_ += time_delayed;
+    }
+
     void AddAnimationAction(const AnimationAction<T> &animation_action) {
       animation_action_list_.push_back(animation_action);
     }
 
     void Update(const float delta_time) {
       if (!is_playing_) {
+        return;
+      }
+
+      if (time_delayed_ > 0) {
+        if (time_delayed_ >= delta_time) {
+          time_delayed_ -= delta_time;
+        } else {
+          Update(delta_time - time_delayed_);
+          time_delayed_ = 0;
+        }
         return;
       }
 
@@ -89,17 +109,20 @@ namespace OpenGLModelDisplayer {
     }
 
     const T &AnimationStatus() {
-      return animation_status_;
+      return defalut_animation_status_ + animation_status_;
     }
 
   private:
 
+    T defalut_animation_status_;
     T previous_animation_status_;
     T animation_status_;
 
     std::vector<AnimationAction<T> > animation_action_list_;
     size_t current_action_index_;
     float time_used_;
+
+    float time_delayed_;
 
     bool is_playing_;
     bool is_loop_;

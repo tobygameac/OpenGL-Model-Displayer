@@ -51,7 +51,7 @@ namespace OpenGLModelDisplayer {
 
     virtual void Draw(const glm::mat4 &root_modelview_matrix);
 
-    bool BuildMeshFromObjFile(const std::string &file_path);
+    bool BuildMeshFromOptimusPrimeObjFile(const std::string &file_path);
 
     void BuildSimpleMesh();
 
@@ -75,15 +75,23 @@ namespace OpenGLModelDisplayer {
 
     std::shared_ptr<HierarchicalMeshNode> left_upper_arm_mesh_node_;
     std::shared_ptr<HierarchicalMeshNode> left_lower_arm_mesh_node_;
+    std::shared_ptr<HierarchicalMeshNode> left_upper_arm_joint_mesh_node_;
+    std::shared_ptr<HierarchicalMeshNode> left_lower_arm_joint_mesh_node_;
 
     std::shared_ptr<HierarchicalMeshNode> right_upper_arm_mesh_node_;
     std::shared_ptr<HierarchicalMeshNode> right_lower_arm_mesh_node_;
+    std::shared_ptr<HierarchicalMeshNode> right_upper_arm_joint_mesh_node_;
+    std::shared_ptr<HierarchicalMeshNode> right_lower_arm_joint_mesh_node_;
 
     std::shared_ptr<HierarchicalMeshNode> left_upper_leg_mesh_node_;
     std::shared_ptr<HierarchicalMeshNode> left_lower_leg_mesh_node_;
+    std::shared_ptr<HierarchicalMeshNode> left_upper_leg_joint_mesh_node_;
+    std::shared_ptr<HierarchicalMeshNode> left_lower_leg_joint_mesh_node_;
 
     std::shared_ptr<HierarchicalMeshNode> right_upper_leg_mesh_node_;
     std::shared_ptr<HierarchicalMeshNode> right_lower_leg_mesh_node_;
+    std::shared_ptr<HierarchicalMeshNode> right_upper_leg_joint_mesh_node_;
+    std::shared_ptr<HierarchicalMeshNode> right_lower_leg_joint_mesh_node_;
   };
 
   GLRobot::GLRobot() :
@@ -94,29 +102,49 @@ namespace OpenGLModelDisplayer {
 
     left_upper_arm_mesh_node_(new HierarchicalMeshNode()),
     left_lower_arm_mesh_node_(new HierarchicalMeshNode()),
+    left_upper_arm_joint_mesh_node_(new HierarchicalMeshNode()),
+    left_lower_arm_joint_mesh_node_(new HierarchicalMeshNode()),
 
     right_upper_arm_mesh_node_(new HierarchicalMeshNode()),
     right_lower_arm_mesh_node_(new HierarchicalMeshNode()),
+    right_upper_arm_joint_mesh_node_(new HierarchicalMeshNode()),
+    right_lower_arm_joint_mesh_node_(new HierarchicalMeshNode()),
 
     left_upper_leg_mesh_node_(new HierarchicalMeshNode()),
     left_lower_leg_mesh_node_(new HierarchicalMeshNode()),
+    left_upper_leg_joint_mesh_node_(new HierarchicalMeshNode()),
+    left_lower_leg_joint_mesh_node_(new HierarchicalMeshNode()),
 
     right_upper_leg_mesh_node_(new HierarchicalMeshNode()),
-    right_lower_leg_mesh_node_(new HierarchicalMeshNode()) {
+    right_lower_leg_mesh_node_(new HierarchicalMeshNode()),
+    right_upper_leg_joint_mesh_node_(new HierarchicalMeshNode()),
+    right_lower_leg_joint_mesh_node_(new HierarchicalMeshNode()) {
       root_mesh_node_->SetChildMeshNode(torso_mesh_node_);
 
       torso_mesh_node_->SetChildMeshNode(head_mesh_node_);
 
-      head_mesh_node_->SetNextMeshNode(left_upper_arm_mesh_node_);
-      left_upper_arm_mesh_node_->SetNextMeshNode(right_upper_arm_mesh_node_);
-      right_upper_arm_mesh_node_->SetNextMeshNode(left_upper_leg_mesh_node_);
-      left_upper_leg_mesh_node_->SetNextMeshNode(right_upper_leg_mesh_node_);
+      head_mesh_node_->SetNextMeshNode(left_upper_arm_joint_mesh_node_);
+      left_upper_arm_joint_mesh_node_->SetNextMeshNode(right_upper_arm_joint_mesh_node_);
+      right_upper_arm_joint_mesh_node_->SetNextMeshNode(left_upper_leg_joint_mesh_node_);
+      left_upper_leg_joint_mesh_node_->SetNextMeshNode(right_upper_leg_joint_mesh_node_);
 
-      left_upper_arm_mesh_node_->SetChildMeshNode(left_lower_arm_mesh_node_);
-      right_upper_arm_mesh_node_->SetChildMeshNode(right_lower_arm_mesh_node_);
+      // Arm
+      left_upper_arm_joint_mesh_node_->SetChildMeshNode(left_upper_arm_mesh_node_);
+      left_upper_arm_mesh_node_->SetChildMeshNode(left_lower_arm_joint_mesh_node_);
+      left_lower_arm_joint_mesh_node_->SetChildMeshNode(left_lower_arm_mesh_node_);
 
-      left_upper_leg_mesh_node_->SetChildMeshNode(left_lower_leg_mesh_node_);
-      right_upper_leg_mesh_node_->SetChildMeshNode(right_lower_leg_mesh_node_);
+      right_upper_arm_joint_mesh_node_->SetChildMeshNode(right_upper_arm_mesh_node_);
+      right_lower_arm_joint_mesh_node_->SetChildMeshNode(right_lower_arm_mesh_node_);
+      right_upper_arm_mesh_node_->SetChildMeshNode(right_lower_arm_joint_mesh_node_);
+
+      // Leg
+      left_upper_leg_joint_mesh_node_->SetChildMeshNode(left_upper_leg_mesh_node_);
+      left_upper_leg_mesh_node_->SetChildMeshNode(left_lower_leg_joint_mesh_node_);
+      left_lower_leg_joint_mesh_node_->SetChildMeshNode(left_lower_leg_mesh_node_);
+
+      right_upper_leg_joint_mesh_node_->SetChildMeshNode(right_upper_leg_mesh_node_);
+      right_upper_leg_mesh_node_->SetChildMeshNode(right_lower_leg_joint_mesh_node_);
+      right_lower_leg_joint_mesh_node_->SetChildMeshNode(right_lower_leg_mesh_node_);
 
       all_mesh_nodes_.push_back(torso_mesh_node_);
 
@@ -124,15 +152,23 @@ namespace OpenGLModelDisplayer {
 
       all_mesh_nodes_.push_back(left_upper_arm_mesh_node_);
       all_mesh_nodes_.push_back(left_lower_arm_mesh_node_);
+      all_mesh_nodes_.push_back(left_upper_arm_joint_mesh_node_);
+      all_mesh_nodes_.push_back(left_lower_arm_joint_mesh_node_);
 
       all_mesh_nodes_.push_back(right_upper_arm_mesh_node_);
       all_mesh_nodes_.push_back(right_lower_arm_mesh_node_);
+      all_mesh_nodes_.push_back(right_upper_arm_joint_mesh_node_);
+      all_mesh_nodes_.push_back(right_lower_arm_joint_mesh_node_);
 
       all_mesh_nodes_.push_back(left_upper_leg_mesh_node_);
       all_mesh_nodes_.push_back(left_lower_leg_mesh_node_);
+      all_mesh_nodes_.push_back(left_upper_leg_joint_mesh_node_);
+      all_mesh_nodes_.push_back(left_lower_leg_joint_mesh_node_);
 
       all_mesh_nodes_.push_back(right_upper_leg_mesh_node_);
       all_mesh_nodes_.push_back(right_lower_leg_mesh_node_);
+      all_mesh_nodes_.push_back(right_upper_leg_joint_mesh_node_);
+      all_mesh_nodes_.push_back(right_lower_leg_joint_mesh_node_);
   }
 
   void GLRobot::Update(const float delta_time) {
@@ -156,106 +192,186 @@ namespace OpenGLModelDisplayer {
   void GLRobot::WalkingMode() {
     ClearAnimation();
 
-    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 1, 0), 1 / 3.0));
-    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, -1, 0), 2 / 3.0));
-    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 0), 1 / 3.0));
+    const float TOTAL_TIMES = 1;
 
-    head_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 15, 0), 1));
-    head_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, -30, 0), 2));
-    head_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 15, 0), 1));
+    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0.01, 0.02, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-0.01, -0.02, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-0.01, 0.02, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0.01, -0.02, 0), 1.0 / 4.0 * TOTAL_TIMES));
 
-    left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(10, 0, 0), 1.0 / 4.5));
-    left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-20, 0, 0), 2.0 / 4.5));
-    left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(10, 0, 0), 1.0 / 4.5));
+    left_upper_arm_joint_mesh_node_->AddRotationAnimationDelay(1 / 2.0 * TOTAL_TIMES);
+    left_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-20, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+    left_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(20, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
 
-    right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-10, 0, 0), 1.0 / 4.5));
-    right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(20, 0, 0), 2.0 / 4.5));
-    right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-10, 0, 0), 1.0 / 4.5));
+    right_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-20, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+    right_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(20, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
 
-    left_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-10, 0, 0), 1.0 / 4.5));
-    left_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(20, 0, 0), 2.0 / 4.5));
-    left_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-10, 0, 0), 1.0 / 4.5));
+    left_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-20, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+    left_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(20, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
 
-    right_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(10, 0, 0), 1.0 / 4.5));
-    right_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-20, 0, 0), 2.0 / 4.5));
-    right_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(10, 0, 0), 1.0 / 4.5));
+    right_upper_leg_joint_mesh_node_->AddRotationAnimationDelay(1 / 2.0 * TOTAL_TIMES);
+    right_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-20, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+    right_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(20, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+
+    left_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(30, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+    left_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-30, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+
+    right_lower_leg_joint_mesh_node_->AddRotationAnimationDelay(1 / 2.0 * TOTAL_TIMES);
+    right_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(30, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+    right_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-30, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
   }
 
   void GLRobot::RunningMode() {
     ClearAnimation();
 
-    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 5, 0), 1 / 4.0));
-    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, -10, 0), 2 / 4.0));
-    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 5, 0), 1 / 4.0));
+    const float TOTAL_TIMES = 0.75;
 
-    head_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 15, 0), 1 / 4.0));
-    head_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, -30, 0), 2 / 4.0));
-    head_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 15, 0), 1 / 4.0));
+    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(5, 5, 0), 1 / 4.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-5, -5, 0), 1 / 4.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(5, -5, 0), 1 / 4.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-5, 5, 0), 1 / 4.0 * TOTAL_TIMES));
 
-    left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(20, 0, 0), 1.0 / 4.0));
-    left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-40, 0, 0), 2.0 / 4.0));
-    left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(20, 0, 0), 1.0 / 4.0));
+    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0.05, 0.1, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-0.05, -0.1, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-0.05, 0.1, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0.05, -0.1, 0), 1.0 / 4.0 * TOTAL_TIMES));
 
-    right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-20, 0, 0), 1.0 / 4.0));
-    right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(40, 0, 0), 2.0 / 4.0));
-    right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-20, 0, 0), 1.0 / 4.0));
+    head_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 15, 0), 1 / 2.0 * TOTAL_TIMES));
+    head_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, -30, 0), 1 * TOTAL_TIMES));
+    head_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 15, 0), 1 / 2.0 * TOTAL_TIMES));
 
-    left_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-20, 0, 0), 1.0 / 4.0));
-    left_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(40, 0, 0), 2.0 / 4.0));
-    left_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-20, 0, 0), 1.0 / 4.0));
+    left_upper_arm_joint_mesh_node_->AddRotationAnimationDelay(1 / 2.0 * TOTAL_TIMES);
+    left_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-60, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+    left_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(60, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
 
-    right_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(20, 0, 0), 1.0 / 4.0));
-    right_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-40, 0, 0), 2.0 / 4.0));
-    right_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(20, 0, 0), 1.0 / 4.0));
+    right_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-60, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+    right_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(60, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
 
-    left_lower_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-5, 0, 0), 1 / 3.0));
-    left_lower_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(10, 0, 0), 2 / 3.0));
-    left_lower_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-5, 0, 0), 1 / 3.0));
+    left_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-60, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+    left_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(60, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
 
-    right_lower_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-5, 0, 0), 1 / 3.0));
-    right_lower_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(10, 0, 0), 2 / 3.0));
-    right_lower_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-5, 0, 0), 1 / 3.0));
+    right_upper_leg_joint_mesh_node_->AddRotationAnimationDelay(1 / 2.0 * TOTAL_TIMES);
+    right_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-60, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+    right_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(60, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+
+    left_lower_arm_joint_mesh_node_->SetDefaultRotationAnimationStatus(glm::vec3(0, 0, 20));
+
+    left_lower_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(30, 0, 0), 1 / 2.0 * TOTAL_TIMES));
+    left_lower_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-30, 0, 0), 1 / 2.0 * TOTAL_TIMES));
+
+    right_lower_arm_joint_mesh_node_->SetDefaultRotationAnimationStatus(glm::vec3(0, 0, -20));
+
+    right_lower_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-30, 0, 0), 1 / 2.0 * TOTAL_TIMES));
+    right_lower_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(30, 0, 0), 1 / 2.0 * TOTAL_TIMES));
+
+    left_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(80, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+    left_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-80, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+
+    right_lower_leg_joint_mesh_node_->AddRotationAnimationDelay(1 / 2.0 * TOTAL_TIMES);
+    right_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(80, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+    right_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-80, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
   }
 
   void GLRobot::FlyingMode() {
     ClearAnimation();
 
-    left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 20), 1.0 / 4.0));
-    left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, -40), 2.0 / 4.0));
-    left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 20), 1.0 / 4.0));
+    //left_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 20), 1.0 / 4.0));
+    //left_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, -40), 2.0 / 4.0));
+    //left_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 20), 1.0 / 4.0));
 
-    right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, -20), 1.0 / 4.0));
-    right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 40), 2.0 / 4.0));
-    right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, -20), 1.0 / 4.0));
+    //right_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, -20), 1.0 / 4.0));
+    //right_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 40), 2.0 / 4.0));
+    //right_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, -20), 1.0 / 4.0));
 
-    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0.2, 0), 1));
-    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, -0.2, 0), 1));
+    //torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0.2, 0), 1));
+    //torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, -0.2, 0), 1));
+
+    const float TOTAL_TIMES = 2;
+
+    //torso_mesh_node_->SetDefaultRotationAnimationStatus(glm::vec3(0, 0, -45));
+    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 180, -45), 1.0 / 2.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 180, 45), 1.0 / 2.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 180, 45), 1.0 / 2.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 180, -45), 1.0 / 2.0 * TOTAL_TIMES));
+
+    left_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, -30), 1.0 / 2.0 * TOTAL_TIMES));
+    left_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 30), 1.0 / 2.0 * TOTAL_TIMES));
+    left_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 0), 1.0 * TOTAL_TIMES));
+
+    left_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(120, 0, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    left_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-120, 0, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    left_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 0), 3.0 / 2.0 * TOTAL_TIMES));
+
+    right_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 0), 1.0 * TOTAL_TIMES));
+    right_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 30), 1.0 / 2.0 * TOTAL_TIMES));
+    right_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, -30), 1.0 / 2.0 * TOTAL_TIMES));
+
+    right_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 0), 1.0 * TOTAL_TIMES));
+    right_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(120, 0, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    right_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-120, 0, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    right_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 0), 1.0 / 2.0 * TOTAL_TIMES));
+
+    left_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-90, 0, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    left_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(90, 0, 0), 3.0 / 4.0 * TOTAL_TIMES));
+    left_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(90, 0, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    left_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-120, 0, 0), 1.0 / 8.0 * TOTAL_TIMES));
+    left_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(30, 0, 0), 5.0 / 8.0 * TOTAL_TIMES));
+
+    right_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-90, 0, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    right_upper_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(90, 0, 0), 3.0 / 4.0 * TOTAL_TIMES));
+    right_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(90, 0, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    right_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-120, 0, 0), 1.0 / 8.0 * TOTAL_TIMES));
+    right_lower_leg_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(30, 0, 0), 5.0 / 8.0 * TOTAL_TIMES));
+
+    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 0), 2.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0.02, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, -0.4), 1.0 / 4.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, -0.02, 0), 1.0 / 2.0 * TOTAL_TIMES));
+
+    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-30, 0, 0), 1.0 / 4.0 * TOTAL_TIMES));
+    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(30, 0, 0), 3.0 / 4.0 * TOTAL_TIMES));
+
+    left_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 0), 2.0 * TOTAL_TIMES));
+    left_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 30), 1.0 / 4.0 * TOTAL_TIMES));
+    left_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, -30), 3.0 / 4.0 * TOTAL_TIMES));
+
+    right_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 0), 2.0 * TOTAL_TIMES));
+    right_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, -30), 1.0 / 4.0 * TOTAL_TIMES));
+    right_upper_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 30), 3.0 / 4.0 * TOTAL_TIMES));
+
+    left_lower_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 0), 2.0 * TOTAL_TIMES));
+    left_lower_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-135, 0, 90), 1 / 4.0 * TOTAL_TIMES));
+    left_lower_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(135, 0, -90), 3.0 / 4.0 * TOTAL_TIMES));
+
+    right_lower_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0, 0), 2.0 * TOTAL_TIMES));
+    right_lower_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-135, 0, -90), 1 / 4.0 * TOTAL_TIMES));
+    right_lower_arm_joint_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(135, 0, 90), 3.0 / 4.0 * TOTAL_TIMES));
   }
 
   void GLRobot::StupidMode() {
     ClearAnimation();
 
-    torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(360, 0, 0), 2));
+    //torso_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(360, 0, 0), 2));
 
-    left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(20, 0, 0), 1.0 / 4.0));
-    left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-40, 0, 0), 2.0 / 4.0));
-    left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(20, 0, 0), 1.0 / 4.0));
+    //left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(20, 0, 0), 1.0 / 4.0));
+    //left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-40, 0, 0), 2.0 / 4.0));
+    //left_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(20, 0, 0), 1.0 / 4.0));
 
-    right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-20, 0, 0), 1.0 / 4.0));
-    right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(40, 0, 0), 2.0 / 4.0));
-    right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-20, 0, 0), 1.0 / 4.0));
+    //right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-20, 0, 0), 1.0 / 4.0));
+    //right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(40, 0, 0), 2.0 / 4.0));
+    //right_upper_arm_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-20, 0, 0), 1.0 / 4.0));
 
-    left_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-60, 0, 0), 1.0 / 2.0));
-    left_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(60, 0, 0), 1.0 / 2.0));
+    //left_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-60, 0, 0), 1.0 / 2.0));
+    //left_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(60, 0, 0), 1.0 / 2.0));
 
-    right_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-60, 0, 0), 1.0 / 2.0));
-    right_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(60, 0, 0), 1.0 / 2.0));
+    //right_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(-60, 0, 0), 1.0 / 2.0));
+    //right_upper_leg_mesh_node_->AddRotationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(60, 0, 0), 1.0 / 2.0));
 
-    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0.2, 0), 1.0 / 2.0));
-    torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, -0.2, 0), 1.0 / 2.0));
+    //torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, 0.2, 0), 1.0 / 2.0));
+    //torso_mesh_node_->AddTranslationAnimationAction(AnimationAction<glm::vec3>(glm::vec3(0, -0.2, 0), 1.0 / 2.0));
   }
 
-  bool GLRobot::BuildMeshFromObjFile(const std::string &file_path) {
+  bool GLRobot::BuildMeshFromOptimusPrimeObjFile(const std::string &file_path) {
 
     std::string file_folder_path = file_path.substr(0, file_path.find_last_of("/\\") + 1);
 
@@ -320,19 +436,18 @@ namespace OpenGLModelDisplayer {
           } else if (line_header == "map_kd") {
             std::string texture_file_path;
             input_string_stream >> texture_file_path;
-            GLTexture::SetGLTexture(cv::imread(file_folder_path + texture_file_path), target_mesh_node->GetMeshTextureId());
+            GLuint texture_id;
+            GLTexture::SetGLTexture(cv::imread(file_folder_path + texture_file_path), &texture_id);
 
             // temp
             if (material_name == "head") {
+              head_mesh_node_->SetMeshTextureId(texture_id);
             } else {
-              GLTexture::SetGLTexture(cv::imread(file_folder_path + texture_file_path), torso_mesh_node_->GetMeshTextureId());
-              *left_upper_arm_mesh_node_->GetMeshTextureId() = *torso_mesh_node_->GetMeshTextureId();
-              *right_upper_arm_mesh_node_->GetMeshTextureId() = *torso_mesh_node_->GetMeshTextureId();
-              *right_lower_arm_mesh_node_->GetMeshTextureId() = *torso_mesh_node_->GetMeshTextureId();
-              *left_upper_leg_mesh_node_->GetMeshTextureId() = *torso_mesh_node_->GetMeshTextureId();
-              *left_lower_leg_mesh_node_->GetMeshTextureId() = *torso_mesh_node_->GetMeshTextureId();
-              *right_upper_leg_mesh_node_->GetMeshTextureId() = *torso_mesh_node_->GetMeshTextureId();
-              *right_lower_leg_mesh_node_->GetMeshTextureId() = *torso_mesh_node_->GetMeshTextureId();
+              for (const auto &mesh_node : all_mesh_nodes_) {
+                if (mesh_node != head_mesh_node_) {
+                  mesh_node->SetMeshTextureId(texture_id);
+                }
+              }
             }
             // temp
 
@@ -361,70 +476,108 @@ namespace OpenGLModelDisplayer {
         obj_file_vertices.push_back(vertex);
       } else if (line_header == "f") {
         std::string vertex_detail;
-        int face_vertex_count = 0;
+
+        std::vector<size_t> face_vertex_indices;
+        std::vector<glm::vec3> face_vertex_kds;
+        std::vector<size_t> face_vt_indices;
+        std::vector<size_t> face_vn_indices;
+
         while (input_string_stream >> vertex_detail) {
           std::replace(vertex_detail.begin(), vertex_detail.end(), '/', ' ');
           std::istringstream vertex_detail_string_stream(vertex_detail);
-          size_t vertex_index;
-          vertex_detail_string_stream >> vertex_index;
 
-          // temp
-          if (!face_vertex_count && target_mesh_node != head_mesh_node_) {
-            target_mesh_node = torso_mesh_node_;
-            if (obj_file_vertices[vertex_index - 1].x < -0.46) {
-              if (obj_file_vertices[vertex_index - 1].y < 0.8) {
+          size_t face_vertex_index;
+          vertex_detail_string_stream >> face_vertex_index;
+          face_vertex_indices.push_back(face_vertex_index - 1);
+
+          if (current_material_name != "") {
+            face_vertex_kds.push_back(materials_map[current_material_name].kd);
+          }
+
+          if (vertex_detail_string_stream) {
+            size_t face_vt_index;
+            vertex_detail_string_stream >> face_vt_index;
+            face_vt_indices.push_back(face_vt_index - 1);
+          }
+
+          if (vertex_detail_string_stream) {
+            size_t face_vn_index;
+            vertex_detail_string_stream >> face_vn_index;
+            face_vn_indices.push_back(face_vn_index - 1);
+          }
+        }
+
+        if (target_mesh_node != head_mesh_node_) {
+          glm::vec3 face_center(0, 0, 0);
+          for (const auto &face_vertex_index : face_vertex_indices) {
+            face_center += obj_file_vertices[face_vertex_index] / (float)face_vertex_indices.size();
+          }
+          target_mesh_node = torso_mesh_node_;
+          if (face_center.y > 0.3 && face_center.x < -0.3) {
+            if (face_center.x > -0.31) {
+              target_mesh_node = left_upper_arm_joint_mesh_node_;
+            } else {
+              if (face_center.y < 0.84) {
                 target_mesh_node = left_lower_arm_mesh_node_;
+              } else if (face_center.y < 0.85) {
+                target_mesh_node = left_lower_arm_joint_mesh_node_;
               } else {
                 target_mesh_node = left_upper_arm_mesh_node_;
-              }
-            } else if (obj_file_vertices[vertex_index - 1].x > 0.46) {
-              if (obj_file_vertices[vertex_index - 1].y < 0.8) {
+              } 
+            }
+          } else if (face_center.y > 0.3 && face_center.x > 0.36) {
+            if (face_center.x < 0.37) {
+              target_mesh_node = right_upper_arm_joint_mesh_node_;
+            } else {
+              if (face_center.y < 0.84) {
                 target_mesh_node = right_lower_arm_mesh_node_;
+              } else if (face_center.y < 0.85) {
+                target_mesh_node = right_lower_arm_joint_mesh_node_;
               } else {
                 target_mesh_node = right_upper_arm_mesh_node_;
               }
-            } else if (obj_file_vertices[vertex_index - 1].y < 0.6) {
-              if (obj_file_vertices[vertex_index - 1].x < 0) {
-                if (obj_file_vertices[vertex_index - 1].y < 0.3) {
-                  target_mesh_node = left_lower_leg_mesh_node_;
-                } else {
-                  target_mesh_node = left_upper_leg_mesh_node_;
-                }
-              } else if (obj_file_vertices[vertex_index - 1].x > 0) {
-                if (obj_file_vertices[vertex_index - 1].y < 0.3) {
-                  target_mesh_node = right_lower_leg_mesh_node_;
-                } else {
-                  target_mesh_node = right_lower_leg_mesh_node_;
-                }
+            }
+          } else if (face_center.y < 0.6) {
+            if (face_center.x < 0) {
+              if (face_center.y < 0.045) {
+                target_mesh_node = left_lower_leg_mesh_node_;
+              } else if (face_center.y < 0.06) {
+                target_mesh_node = left_lower_leg_joint_mesh_node_;
+              } else if (face_center.y < 0.59) {
+                target_mesh_node = left_upper_leg_mesh_node_;
+              } else {
+                target_mesh_node = left_upper_leg_joint_mesh_node_;
               }
-
+            } else if (face_center.x > 0) {
+              if (face_center.y < 0.045) {
+                target_mesh_node = right_lower_leg_mesh_node_;
+              } else if (face_center.y < 0.06) {
+                target_mesh_node = right_lower_leg_joint_mesh_node_;
+              } else if (face_center.y < 0.59) {
+                target_mesh_node = right_upper_leg_mesh_node_;
+              } else {
+                target_mesh_node = right_upper_leg_joint_mesh_node_;
+              }
             }
           }
-          // temp
-
-          target_mesh_node->GetMeshVertices().push_back(obj_file_vertices[vertex_index - 1]);
-
-          if (current_material_name != "") {
-            target_mesh_node->GetMeshColors().push_back(materials_map[current_material_name].kd);
-          }
-
-          if (vertex_detail_string_stream) {
-            size_t vt_index;
-            vertex_detail_string_stream >> vt_index;
-            target_mesh_node->GetMeshUvs().push_back(obj_file_uvs[vt_index - 1]);
-          }
-
-          if (vertex_detail_string_stream) {
-            size_t vn_index;
-            vertex_detail_string_stream >> vn_index;
-            target_mesh_node->GetMeshNormals().push_back(obj_file_normals[vn_index - 1]);
-          }
-          ++face_vertex_count;
         }
 
-        if (face_vertex_count == 3) { // Triangle face
-        } else {
+        for (const auto &face_vertex_index : face_vertex_indices) {
+          target_mesh_node->AddMeshVertex(obj_file_vertices[face_vertex_index]);
         }
+
+        for (const auto &face_vertex_kd : face_vertex_kds) {
+          target_mesh_node->AddMeshColor(face_vertex_kd);
+        }
+
+        for (const auto &face_vt_index : face_vt_indices) {
+          target_mesh_node->AddMeshUv(obj_file_uvs[face_vt_index]);
+        }
+
+        for (const auto &face_vn_index : face_vn_indices) {
+          target_mesh_node->AddMeshNormal(obj_file_normals[face_vn_index]);
+        }
+
       } else if (line_header == "vn") {
         glm::vec3 normal;
         input_string_stream >> normal.x >> normal.y >> normal.z;
@@ -432,7 +585,7 @@ namespace OpenGLModelDisplayer {
       } else if (line_header == "vt") {
         glm::vec2 uv;
         input_string_stream >> uv.x >> uv.y;
-        if (uv.y < 1.0) {
+        if (uv.y < 0.0) {
           uv.y += 1.0;
         }
         obj_file_uvs.push_back(uv);
@@ -441,14 +594,7 @@ namespace OpenGLModelDisplayer {
       }
     }
 
-    // temp
-
-
     root_mesh_node_->AlignPositionToOrigin();
-
-    //root_mesh_node_->CreateBoxMesh(5, 0.001f, 5, glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
-
-    // temp
 
     Upload();
 
@@ -456,6 +602,7 @@ namespace OpenGLModelDisplayer {
   }
 
   void GLRobot::BuildSimpleMesh() {
+    // Need to add joint
     root_mesh_node_->CreateBoxMesh(20, 0.001f, 20, glm::vec3(0, -8, 0), glm::vec3(1, 1, 1));
 
     torso_mesh_node_->CreateBoxMesh(4, 6, 4, glm::vec3(0, 9, 0), glm::vec3(0, 1, 0));
