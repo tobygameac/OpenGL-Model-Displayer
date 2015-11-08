@@ -98,6 +98,8 @@ namespace OpenGLModelDisplayer {
       srand((unsigned)time(0));
       InitializeOpenGL();
 
+      hint_label->Text = "Press mouse : Adjust view angle \n Scroll mouse : Change eyes distance \n F1 : Stand \n F2 : Walk \n F3 : Run \n F4 : Kungfu \n F5 : Spike";
+
       this->MouseWheel += gcnew System::Windows::Forms::MouseEventHandler(this, &OpenGLModelDisplayer::GLForm::GLPanelMouseWheel);
       this->gl_panel->MouseMove += gcnew System::Windows::Forms::MouseEventHandler(this, &OpenGLModelDisplayer::GLForm::GLPanelMouseMove);
       this->KeyDown += gcnew System::Windows::Forms::KeyEventHandler(this, &OpenGLModelDisplayer::GLForm::GLPanelKeyDown);
@@ -123,8 +125,10 @@ namespace OpenGLModelDisplayer {
   private:
 
     System::Windows::Forms::Panel^ gl_panel;
+    System::Windows::Forms::Label^ hint_label;
     System::Windows::Forms::Timer^ frame_refresh_timer;
     System::ComponentModel::IContainer^ components;
+
 
     static HWND hwnd;
     static HDC hdc;
@@ -334,10 +338,10 @@ namespace OpenGLModelDisplayer {
         robot.RunningMode();
         break;
       case Keys::F4:
-        robot.FlyingMode();
+        robot.KongfuMode();
         break;
       case Keys::F5:
-        robot.StupidMode();
+        robot.SpikeMode();
         break;
       case Keys::W:
       case Keys::Up:
@@ -389,6 +393,7 @@ namespace OpenGLModelDisplayer {
       this->components = (gcnew System::ComponentModel::Container());
       this->gl_panel = (gcnew System::Windows::Forms::Panel());
       this->frame_refresh_timer = (gcnew System::Windows::Forms::Timer(this->components));
+      this->hint_label = (gcnew System::Windows::Forms::Label());
       this->SuspendLayout();
       // 
       // gl_panel
@@ -398,16 +403,28 @@ namespace OpenGLModelDisplayer {
       this->gl_panel->Size = System::Drawing::Size(800, 600);
       this->gl_panel->TabIndex = 0;
       // 
+      // hint_label
+      // 
+      this->hint_label->AutoSize = true;
+      this->hint_label->Location = System::Drawing::Point(818, 12);
+      this->hint_label->Name = L"hint_label";
+      this->hint_label->Size = System::Drawing::Size(35, 13);
+      this->hint_label->TabIndex = 1;
+      this->hint_label->Text = L"hint_label";
+      // 
       // GLForm
       // 
       this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
       this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
       this->ClientSize = System::Drawing::Size(1008, 730);
+      this->Controls->Add(this->hint_label);
       this->Controls->Add(this->gl_panel);
       this->Name = L"GLForm";
       this->Text = L"GLForm";
       this->Load += gcnew System::EventHandler(this, &GLForm::GLForm_Load);
       this->ResumeLayout(false);
+      this->PerformLayout();
+
     }
 #pragma endregion
   private:
