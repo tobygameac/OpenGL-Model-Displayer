@@ -21,24 +21,6 @@
 
 namespace OpenGLModelDisplayer {
 
-  // temp
-  class GLMaterial {
-
-  public:
-    GLMaterial() : texture_ka_id(new GLuint(0)), texture_kd_id(new GLuint(0)), texture_ks_id(new GLuint(0)) {
-    }
-
-    glm::vec3 ka;
-    glm::vec3 kd;
-    glm::vec3 ks;
-
-    std::shared_ptr<GLuint> texture_ka_id;
-    std::shared_ptr<GLuint> texture_kd_id;
-    std::shared_ptr<GLuint> texture_ks_id;
-
-  };
-  // temp
-
   class GLRobot : private GLHierarchicalModel {
 
   public:

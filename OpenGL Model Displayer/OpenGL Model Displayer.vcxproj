@@ -93,6 +93,7 @@
     <ClInclude Include="gl_math.h" />
     <ClInclude Include="gl_mesh.h" />
     <ClInclude Include="gl_robot.h" />
+    <ClInclude Include="gl_simple_model.h" />
     <ClInclude Include="gl_texture.h" />
   </ItemGroup>
   <ItemGroup>

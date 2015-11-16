@@ -24,16 +24,16 @@ struct Material {
 
 Material front_material = Material(
   vec4(0.2, 0.2, 0.2, 1.0),
-  //vec4(fragment_color, 1.0),
-  texture2D(texture, fragment_vertex_uv),
+  vec4(fragment_color, 1.0),
+  //texture2D(texture, fragment_vertex_uv),
   vec4(1.0, 1.0, 1.0, 1.0),
   5.0
   );
 
 Material back_material = Material(
   vec4(0.2, 0.2, 0.2, 1.0),
-  //vec4(fragment_color * 0.2, 1.0),
-  texture2D(texture, fragment_vertex_uv) * 0.2,
+  vec4(fragment_color * 0.2, 1.0),
+  //texture2D(texture, fragment_vertex_uv) * 0.2,
   vec4(1.0, 1.0, 1.0, 1.0),
   5.0
   );
