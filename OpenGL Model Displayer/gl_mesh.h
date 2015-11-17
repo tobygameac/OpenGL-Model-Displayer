@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdlib>
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -23,12 +25,13 @@ namespace OpenGLModelDisplayer {
   extern GLint shader_uniform_inverse_modelview_matrix_id;
   extern GLint shader_uniform_transpose_inverse_modelview_matrix_id;
   extern GLint shader_uniform_texture_id;
+  extern GLint shader_uniform_texture_flag_id;
 
   class GLMesh {
 
   public:
 
-    GLMesh() : vbo_vertices_(0), vbo_colors_(0), vbo_normals_(0), vbo_uvs_(0), local_modelview_matrix_(glm::mat4(1.0)), texture_id_(0) {
+    GLMesh() : vbo_vertices_(0), vbo_colors_(0), vbo_normals_(0), vbo_uvs_(0), local_modelview_matrix_(glm::mat4(1.0)), texture_id_(0), texture_flag_(false) {
     }
 
     static void AddCube(std::shared_ptr<GLMesh> mesh, const float size) {
@@ -44,56 +47,102 @@ namespace OpenGLModelDisplayer {
     }
 
     static void AddCube(std::shared_ptr<GLMesh> mesh, const glm::vec3 center, const float width, const float length, const float height) {
-      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, -1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, 1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * height, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * height, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * height, 1 * length));
 
-      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, -1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, -1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * height, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * height, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * height, -1 * length));
 
-      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, 1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, -1 * height));
-      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * height, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * height, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * height, -1 * length));
 
-      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, -1 * height));
-      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, -1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * height, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * height, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * height, -1 * length));
 
-      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, -1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, 1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * height, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * height, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * height, -1 * length));
 
-      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, 1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, 1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * height, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * height, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * height, -1 * length));
 
-      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, 1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * length, 1 * height));
-      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * height, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, -1 * height, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * height, 1 * length));
 
-      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, 1 * height));
-      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, -1 * height));
-      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * height, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * height, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * height, -1 * length));
 
-      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, -1 * height));
-      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, 1 * height));
-      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * height, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * height, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * height, 1 * length));
 
-      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, 1 * height));
-      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, -1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, -1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * height, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * height, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * height, -1 * length));
 
-      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, 1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, -1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * height, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * height, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * height, 1 * length));
 
-      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * length, 1 * height));
-      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * length, 1 * height));
-      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * length, 1 * height));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 1 * height, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 1 * height, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(1 * width, -1 * height, 1 * length));
+
 
       for (size_t i = 0; i < mesh->vertices_.size(); ++i) {
         mesh->vertices_[i] *= 0.5;
+        mesh->vertices_[i] += center;
+      }
+    }
+
+    static void AddCone(std::shared_ptr<GLMesh> mesh, const float size) {
+      AddCone(mesh, glm::vec3(0, 0, 0), size, size, size);
+    }
+
+    static void AddCone(std::shared_ptr<GLMesh> mesh, const float width, const float length, const float height) {
+      AddCone(mesh, glm::vec3(0, 0, 0), width, length, height);
+    }
+
+    static void AddCone(std::shared_ptr<GLMesh> mesh, const glm::vec3 center, const float size) {
+      AddCone(mesh, center, size, size, size);
+    }
+
+    static void AddCone(std::shared_ptr<GLMesh> mesh, const glm::vec3 center, const float width, const float length, const float height) {
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 0, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 0, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 0, 1 * length));
+
+      mesh->vertices_.push_back(glm::vec3(1 * width, 0, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 0, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 0, -1 * length));
+
+      mesh->vertices_.push_back(glm::vec3(0, height, 0));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 0, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 0, 1 * length));
+
+      mesh->vertices_.push_back(glm::vec3(0, height, 0));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 0, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 0, 1 * length));
+
+      mesh->vertices_.push_back(glm::vec3(0, height, 0));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 0, 1 * length));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 0, -1 * length));
+
+      mesh->vertices_.push_back(glm::vec3(0, height, 0));
+      mesh->vertices_.push_back(glm::vec3(1 * width, 0, -1 * length));
+      mesh->vertices_.push_back(glm::vec3(-1 * width, 0, -1 * length));
+
+      for (size_t i = 0; i < mesh->vertices_.size(); ++i) {
+        mesh->vertices_[i].x *= 0.5;
+        mesh->vertices_[i].y -= height * 0.5;
+        mesh->vertices_[i].z *= 0.5;
         mesh->vertices_[i] += center;
       }
     }
@@ -151,6 +200,13 @@ namespace OpenGLModelDisplayer {
       colors_ = std::vector<glm::vec3>(vertices_.size(), color);
     }
 
+    void SetRandomColors() {
+      colors_ = std::vector<glm::vec3>(vertices_.size());
+      for (auto &color : colors_) {
+        color = glm::vec3(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
+      }
+    }
+
     void SetNormal() {
       normals_.resize(vertices_.size());
       for (size_t i = 0; i < vertices_.size(); i += 3) {
@@ -182,6 +238,8 @@ namespace OpenGLModelDisplayer {
         glBindBuffer(GL_ARRAY_BUFFER, vbo_uvs_);
         glBufferData(GL_ARRAY_BUFFER, uvs_.size() * sizeof(uvs_[0]), uvs_.data(), GL_STATIC_DRAW);
       }
+
+      texture_flag_ = uvs_.size();
     }
 
     void Draw() {
@@ -214,9 +272,13 @@ namespace OpenGLModelDisplayer {
         glVertexAttribPointer(shader_attribute_vertex_uv_id, 2, GL_FLOAT, GL_FALSE, 0, 0);
       }
 
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture_id_);
-      glUniform1i(shader_uniform_texture_id, 0);
+      if (texture_flag_) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture_id_);
+        glUniform1i(shader_uniform_texture_id, 0);
+      }
+
+      glUniform1f(shader_uniform_texture_flag_id, texture_flag_ ? 1.0 : 0.0);
 
       glm::mat4 modelview_matrix = parent_modelview_matrix * GetModelviewMatrixWithAnimation();
 
@@ -264,6 +326,8 @@ namespace OpenGLModelDisplayer {
     GLuint vbo_normals_;
     GLuint vbo_colors_;
     GLuint vbo_uvs_;
+
+    bool texture_flag_;
 
     glm::mat4 local_modelview_matrix_;
   };

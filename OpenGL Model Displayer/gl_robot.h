@@ -614,27 +614,27 @@ namespace OpenGLModelDisplayer {
 
   void GLRobot::BuildSimpleMesh() {
     // Need to add joint
-    root_mesh_node_->CreateBoxMesh(20, 0.001f, 20, glm::vec3(0, -8, 0), glm::vec3(1, 1, 1));
+    root_mesh_node_->CreateCubeMesh(20, 0.001f, 20, glm::vec3(0, -8, 0), glm::vec3(1, 1, 1));
 
-    torso_mesh_node_->CreateBoxMesh(4, 6, 4, glm::vec3(0, 9, 0), glm::vec3(0, 1, 0));
+    torso_mesh_node_->CreateCubeMesh(4, 6, 4, glm::vec3(0, 9, 0), glm::vec3(0, 1, 0));
 
-    head_mesh_node_->CreateBoxMesh(3, 2.5, 3, glm::vec3(0, 4.25, 0), glm::vec3(1, 0, 0));
+    head_mesh_node_->CreateCubeMesh(3, 2.5, 3, glm::vec3(0, 4.25, 0), glm::vec3(1, 0, 0));
 
-    left_upper_arm_mesh_node_->CreateBoxMesh(1.5, 2, 1.5, glm::vec3(-2.75, 1, 0), glm::vec3(0, 0, 1));
+    left_upper_arm_mesh_node_->CreateCubeMesh(1.5, 2, 1.5, glm::vec3(-2.75, 1, 0), glm::vec3(0, 0, 1));
 
-    right_upper_arm_mesh_node_->CreateBoxMesh(1.5, 2, 1.5, glm::vec3(2.75, 1, 0), glm::vec3(0, 0, 1));
+    right_upper_arm_mesh_node_->CreateCubeMesh(1.5, 2, 1.5, glm::vec3(2.75, 1, 0), glm::vec3(0, 0, 1));
 
-    left_lower_arm_mesh_node_->CreateBoxMesh(1, 2, 1, glm::vec3(0, -2, 0), glm::vec3(1, 1, 0));
+    left_lower_arm_mesh_node_->CreateCubeMesh(1, 2, 1, glm::vec3(0, -2, 0), glm::vec3(1, 1, 0));
 
-    right_lower_arm_mesh_node_->CreateBoxMesh(1, 2, 1, glm::vec3(0, -2, 0), glm::vec3(1, 1, 0));
+    right_lower_arm_mesh_node_->CreateCubeMesh(1, 2, 1, glm::vec3(0, -2, 0), glm::vec3(1, 1, 0));
 
-    left_upper_leg_mesh_node_->CreateBoxMesh(2, 3, 2, glm::vec3(-1.5, -4.5, 0), glm::vec3(0, 0, 1));
+    left_upper_leg_mesh_node_->CreateCubeMesh(2, 3, 2, glm::vec3(-1.5, -4.5, 0), glm::vec3(0, 0, 1));
 
-    right_upper_leg_mesh_node_->CreateBoxMesh(2, 3, 2, glm::vec3(1.5, -4.5, 0), glm::vec3(0, 0, 1));
+    right_upper_leg_mesh_node_->CreateCubeMesh(2, 3, 2, glm::vec3(1.5, -4.5, 0), glm::vec3(0, 0, 1));
 
-    left_lower_leg_mesh_node_->CreateBoxMesh(1.5f, 3, 1.5f, glm::vec3(0, -3, 0), glm::vec3(1, 1, 0));
+    left_lower_leg_mesh_node_->CreateCubeMesh(1.5f, 3, 1.5f, glm::vec3(0, -3, 0), glm::vec3(1, 1, 0));
 
-    right_lower_leg_mesh_node_->CreateBoxMesh(1.5f, 3, 1.4f, glm::vec3(0, -3, 0), glm::vec3(1, 1, 0));
+    right_lower_leg_mesh_node_->CreateCubeMesh(1.5f, 3, 1.4f, glm::vec3(0, -3, 0), glm::vec3(1, 1, 0));
   }
 
   void GLRobot::Upload() {

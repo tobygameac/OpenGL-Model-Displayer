@@ -29,11 +29,12 @@
 namespace OpenGLModelDisplayer {
 
   enum ProgramStatus {
-    VIEW_OBJ_FILE,
-    VIEW_ROBOT_ANIMATION
+    VIEW_BASIC_DEMO,
+    VIEW_OBJ,
+    VIEW_ROBOT
   };
 
-  ProgramStatus program_status = VIEW_OBJ_FILE;
+  ProgramStatus program_status;
 
   const std::string DEFAULT_VERTEX_SHADER_FILE_PATH = "..\\shader\\vertex_shader.glsl";
   const std::string DEFAULT_FRAGMENT_SHADER_FILE_PATH = "..\\shader\\fragment_shader.glsl";
@@ -49,8 +50,9 @@ namespace OpenGLModelDisplayer {
   const std::string SHADER_UNIFORM_INVERSE_modelview_matrix_NAME = "inverse_modelview_matrix";
   const std::string SHADER_UNIFORM_TRANSPOSE_INVERSE_modelview_matrix_NAME = "transpose_inverse_modelview_matrix";
   const std::string SHADER_UNIFORM_TEXTURE_NAME = "texture";
+  const std::string SHADER_UNIFORM_TEXTURE_FLAG_NAME = "texture_flag";
 
-  const std::string DEFAULT_MODEL_OBJ_FILE_PATH = "..\\data\\Optimus prime\\optimus.obj";
+  const std::string ROBOT_MODEL_OBJ_FILE_PATH = "..\\data\\Optimus prime\\optimus.obj";
 
   GLint shader_program_id;
   GLint shader_attribute_vertex_position_id;
@@ -63,11 +65,13 @@ namespace OpenGLModelDisplayer {
   GLint shader_uniform_inverse_modelview_matrix_id;
   GLint shader_uniform_transpose_inverse_modelview_matrix_id;
   GLint shader_uniform_texture_id;
+  GLint shader_uniform_texture_flag_id;
 
   const int FPS = 60;
   const float FRAME_REFRESH_TIME = 1000.0f / FPS;
 
-  glm::vec3 eye_position(0, 1, 1);
+  const glm::vec3 DEFAULT_EYE_POSITION(3, 3, 3);
+  glm::vec3 eye_position = DEFAULT_EYE_POSITION;
   glm::vec3 look_at_position(0.0, 0.0, 0.0);
 
   const float EYE_POSITION_SCALE_PER_SCROLLING = 0.9f;
@@ -76,6 +80,9 @@ namespace OpenGLModelDisplayer {
   const glm::vec3 ROTATED_DEGREE_PER_SECOND(0.0, 360.0 / 8.0, 0.0);
   glm::vec3 rotated_degree;
 
+  bool rotate_view_matrix = true;
+
+  GLSimpleModel basic_demo_model;
   GLSimpleModel obj_model;
   GLRobot robot;
 
@@ -108,19 +115,31 @@ namespace OpenGLModelDisplayer {
       srand((unsigned)time(0));
       InitializeOpenGL();
 
-      this->open_obj_tool_strip_menu_item->Click += gcnew System::EventHandler(this, &OpenGLModelDisplayer::GLForm::OpenObjButtonClick);
+      basic_demo_model.BuildBasicDemoShape();
 
-      this->hint_label->Text = "Press mouse : Adjust view angle \n Scroll mouse : Change eyes distance \n F1 : Stand \n F2 : Walk \n F3 : Run \n F4 : Kungfu \n F5 : Spike";
+      if (!robot.BuildMeshFromOptimusPrimeObjFile(ROBOT_MODEL_OBJ_FILE_PATH)) {
+        robot.BuildSimpleMesh();
+      }
 
+      ChangeProgramStatus(VIEW_BASIC_DEMO);
+
+      open_obj_tool_strip_menu_item_->Click += gcnew System::EventHandler(this, &OpenGLModelDisplayer::GLForm::OpenObjButtonClick);
+      view_basic_demo_tool_strip_menu_item_->Click += gcnew System::EventHandler(this, &OpenGLModelDisplayer::GLForm::ViewBasicDemoButtonClick);
+      view_obj_tool_strip_menu_item_->Click += gcnew System::EventHandler(this, &OpenGLModelDisplayer::GLForm::ViewObjButtonClick);
+      view_robot_tool_strip_menu_item_->Click += gcnew System::EventHandler(this, &OpenGLModelDisplayer::GLForm::ViewRobotButtonClick);
+
+      button_switch_rotate_mode_->Click += gcnew System::EventHandler(this, &OpenGLModelDisplayer::GLForm::SwitchRotateModeButtonClick);
+      button_reset_eye_->Click += gcnew System::EventHandler(this, &OpenGLModelDisplayer::GLForm::ResetEyeButtonClick);
+
+      gl_panel_->MouseMove += gcnew System::Windows::Forms::MouseEventHandler(this, &OpenGLModelDisplayer::GLForm::GLPanelMouseMove);
       this->MouseWheel += gcnew System::Windows::Forms::MouseEventHandler(this, &OpenGLModelDisplayer::GLForm::GLPanelMouseWheel);
-      this->gl_panel->MouseMove += gcnew System::Windows::Forms::MouseEventHandler(this, &OpenGLModelDisplayer::GLForm::GLPanelMouseMove);
       this->KeyDown += gcnew System::Windows::Forms::KeyEventHandler(this, &OpenGLModelDisplayer::GLForm::GLPanelKeyDown);
 
-      this->frame_refresh_timer->Interval = (int)FRAME_REFRESH_TIME;
-      this->frame_refresh_timer->Enabled = true;
+      frame_refresh_timer_->Interval = (int)FRAME_REFRESH_TIME;
+      frame_refresh_timer_->Enabled = true;
 
-      this->frame_refresh_timer->Tick += gcnew System::EventHandler(this, &OpenGLModelDisplayer::GLForm::FrameRefreshTimerTick);
-      this->frame_refresh_timer->Start();
+      frame_refresh_timer_->Tick += gcnew System::EventHandler(this, &OpenGLModelDisplayer::GLForm::FrameRefreshTimerTick);
+      frame_refresh_timer_->Start();
     }
 
   protected:
@@ -134,14 +153,19 @@ namespace OpenGLModelDisplayer {
     }
 
   private:
-
-    System::Windows::Forms::Panel ^gl_panel;
-    System::Windows::Forms::Label ^hint_label;
-    System::Windows::Forms::Timer ^frame_refresh_timer;
+    System::Windows::Forms::Panel ^gl_panel_;
+    System::Windows::Forms::Label ^hint_label_;
+    System::Windows::Forms::Timer ^frame_refresh_timer_;
+    System::Windows::Forms::MenuStrip ^form_menu_strip_;
+    System::Windows::Forms::ToolStripMenuItem ^file_tool_strip_menu_item_;
+    System::Windows::Forms::ToolStripMenuItem ^open_obj_tool_strip_menu_item_;
+    System::Windows::Forms::ToolStripMenuItem ^mode_tool_strip_menu_item_;
+    System::Windows::Forms::ToolStripMenuItem ^view_basic_demo_tool_strip_menu_item_;
+    System::Windows::Forms::ToolStripMenuItem ^view_obj_tool_strip_menu_item_;
+    System::Windows::Forms::ToolStripMenuItem ^view_robot_tool_strip_menu_item_;
+    System::Windows::Forms::Button ^button_switch_rotate_mode_;
+    System::Windows::Forms::Button^  button_reset_eye_;
     System::ComponentModel::IContainer ^components;
-    System::Windows::Forms::MenuStrip ^file_menu_strip;
-    System::Windows::Forms::ToolStripMenuItem ^file_tool_strip_menu_item;
-    System::Windows::Forms::ToolStripMenuItem ^open_obj_tool_strip_menu_item;
 
     static HWND hwnd;
     static HDC hdc;
@@ -159,7 +183,7 @@ namespace OpenGLModelDisplayer {
     void InitializeOpenGL() {
 
       // Get Handle
-      hwnd = (HWND)this->gl_panel->Handle.ToInt32();
+      hwnd = (HWND)gl_panel_->Handle.ToInt32();
       hdc = GetDC(hwnd);
       wglSwapBuffers(hdc);
 
@@ -295,11 +319,9 @@ namespace OpenGLModelDisplayer {
         std::cerr << "Could not bind uniform " << SHADER_UNIFORM_TEXTURE_NAME << ".\n";
       }
 
-      if (!robot.BuildMeshFromOptimusPrimeObjFile(DEFAULT_MODEL_OBJ_FILE_PATH)) {
-        robot.BuildSimpleMesh();
-      }
-
-      if (!obj_model.BuildMeshFromObjFile(DEFAULT_MODEL_OBJ_FILE_PATH)) {
+      shader_uniform_texture_flag_id = glGetUniformLocation(shader_program_id, SHADER_UNIFORM_TEXTURE_FLAG_NAME.c_str());
+      if (shader_uniform_texture_flag_id == -1) {
+        std::cerr << "Could not bind uniform " << SHADER_UNIFORM_TEXTURE_FLAG_NAME << ".\n";
       }
     }
 
@@ -308,7 +330,7 @@ namespace OpenGLModelDisplayer {
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      float aspect_ratio = this->gl_panel->Size.Width / (float)this->gl_panel->Size.Height;
+      float aspect_ratio = gl_panel_->Size.Width / (float)gl_panel_->Size.Height;
 
       glm::mat4 projection_matrix = glm::perspective(45.0f, aspect_ratio, 0.01f, 1000.0f);
 
@@ -316,34 +338,31 @@ namespace OpenGLModelDisplayer {
 
       glm::mat4 modelview_matrix = glm::mat4(1.0f);
 
-      view_matrix = glm::rotate(view_matrix, glm::radians(rotated_degree.x), glm::vec3(1, 0, 0));
-      view_matrix = glm::rotate(view_matrix, glm::radians(rotated_degree.y), glm::vec3(0, 1, 0));
-      view_matrix = glm::rotate(view_matrix, glm::radians(rotated_degree.z), glm::vec3(0, 0, 1));
+      if (rotate_view_matrix) {
+        view_matrix = glm::rotate(view_matrix, glm::radians(rotated_degree.x), glm::vec3(1, 0, 0));
+        view_matrix = glm::rotate(view_matrix, glm::radians(rotated_degree.y), glm::vec3(0, 1, 0));
+        view_matrix = glm::rotate(view_matrix, glm::radians(rotated_degree.z), glm::vec3(0, 0, 1));
+      } else {
+        modelview_matrix = glm::rotate(modelview_matrix, glm::radians(rotated_degree.x), glm::vec3(1, 0, 0));
+        modelview_matrix = glm::rotate(modelview_matrix, glm::radians(rotated_degree.y), glm::vec3(0, 1, 0));
+        modelview_matrix = glm::rotate(modelview_matrix, glm::radians(rotated_degree.z), glm::vec3(0, 0, 1));
+      }
 
       glUseProgram(shader_program_id);
 
       glUniformMatrix4fv(shader_uniform_projection_matrix_id, 1, GL_FALSE, glm::value_ptr(projection_matrix));
       glUniformMatrix4fv(shader_uniform_view_matrix_id, 1, GL_FALSE, glm::value_ptr(view_matrix));
 
-      if (program_status == VIEW_OBJ_FILE) {
+      if (program_status == VIEW_BASIC_DEMO) {
+        basic_demo_model.Draw(modelview_matrix);
+      } if (program_status == VIEW_OBJ) {
         obj_model.Draw(modelview_matrix);
-      } else if (program_status == VIEW_ROBOT_ANIMATION) {
+      } else if (program_status == VIEW_ROBOT) {
         robot.Draw(modelview_matrix);
       }
 
       SwapBuffers(hdc);
     }
-
-    void OpenObjButtonClick(System::Object ^sender, System::EventArgs ^e) {
-      OpenFileDialog ^open_obj_file_dialog = gcnew OpenFileDialog();
-      open_obj_file_dialog->Filter = "Obj files | *.obj";
-      open_obj_file_dialog->Title = "Open a obj file.";
-
-      if (open_obj_file_dialog->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
-        obj_model.BuildMeshFromObjFile(msclr::interop::marshal_as<std::string>(open_obj_file_dialog->FileName));
-      }
-    }
-
 
     System::Void FrameRefreshTimerTick(System::Object ^sender, System::EventArgs ^e) {
       RenderGLPanel();
@@ -352,17 +371,25 @@ namespace OpenGLModelDisplayer {
       float elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_clock - last_clock).count();
       last_clock = current_clock;
 
-      if (program_status == VIEW_OBJ_FILE) {
-        rotated_degree = rotated_degree + ROTATED_DEGREE_PER_SECOND * (FRAME_REFRESH_TIME / 1000.0f);
-        obj_model.Update(elapsed_time);
-      } else if (program_status == VIEW_ROBOT_ANIMATION) {
+      rotated_degree = rotated_degree + ROTATED_DEGREE_PER_SECOND * (elapsed_time / 1000.0f);
+
+      if (program_status == VIEW_BASIC_DEMO) {
+      } else if (program_status == VIEW_OBJ) {
+      } else if (program_status == VIEW_ROBOT) {
         robot.Update(elapsed_time);
       }
     }
 
     System::Void GLPanelKeyDown(System::Object ^sender, System::Windows::Forms::KeyEventArgs ^e) {
-      if (program_status == VIEW_OBJ_FILE) {
-      } else if (program_status == VIEW_ROBOT_ANIMATION) {
+      switch (e->KeyCode) {
+      case Keys::F1:
+        ResetEye();
+        break;
+      }
+
+      if (program_status == VIEW_BASIC_DEMO) {
+      } else if (program_status == VIEW_OBJ) {
+      } else if (program_status == VIEW_ROBOT) {
         switch (e->KeyCode) {
         case Keys::F1:
           robot.ClearAnimation();
@@ -416,6 +443,58 @@ namespace OpenGLModelDisplayer {
       mouse_last_y = e->Y;
     }
 
+    System::Void OpenObjButtonClick(System::Object ^sender, System::EventArgs ^e) {
+      OpenFileDialog ^open_obj_file_dialog = gcnew OpenFileDialog();
+      open_obj_file_dialog->Filter = "Obj files | *.obj";
+      open_obj_file_dialog->Title = "Open a obj file.";
+
+      if (open_obj_file_dialog->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
+        obj_model.BuildMeshFromObjFile(msclr::interop::marshal_as<std::string>(open_obj_file_dialog->FileName));
+        ChangeProgramStatus(VIEW_OBJ);
+      }
+    }
+
+    System::Void ViewBasicDemoButtonClick(System::Object ^sender, System::EventArgs ^e) {
+      ChangeProgramStatus(VIEW_BASIC_DEMO);
+    }
+
+    System::Void ViewObjButtonClick(System::Object ^sender, System::EventArgs ^e) {
+      ChangeProgramStatus(VIEW_OBJ);
+    }
+
+    System::Void ViewRobotButtonClick(System::Object ^sender, System::EventArgs ^e) {
+      ChangeProgramStatus(VIEW_ROBOT);
+    }
+
+    System::Void SwitchRotateModeButtonClick(System::Object ^sender, System::EventArgs ^e) {
+      rotate_view_matrix = !rotate_view_matrix;
+      button_switch_rotate_mode_->Text = rotate_view_matrix ? "Rotate view" : "Rotate model";
+    }
+
+    System::Void ResetEyeButtonClick(System::Object ^sender, System::EventArgs ^e) {
+      ResetEye();
+    }
+
+    void ResetEye() {
+      eye_position = DEFAULT_EYE_POSITION;
+      eye_position_scale = 1.0;
+      rotated_degree = glm::vec3(0, 0, 0);
+    }
+
+    void ChangeProgramStatus(const ProgramStatus &new_program_status) {
+      program_status = new_program_status;
+
+      if (program_status == VIEW_BASIC_DEMO) {
+        hint_label_->Text = " Press mouse : Adjust view angle \n Scroll mouse : Change eyes distance \n F1 : Reset eye";
+      } else if (program_status == VIEW_OBJ) {
+        hint_label_->Text = " Press mouse : Adjust view angle \n Scroll mouse : Change eyes distance \n F1 : Reset eye";
+      } else if (program_status == VIEW_ROBOT) {
+        hint_label_->Text = " Press mouse : Adjust view angle \n Scroll mouse : Change eyes distance \n F1 : Reset eye & Stand \n F2 : Walk \n F3 : Run \n F4 : Kungfu \n F5 : Spike";
+      }
+
+      ResetEye();
+    }
+
     /// <summary>
     /// Required designer variable.
     /// </summary>
@@ -428,71 +507,121 @@ namespace OpenGLModelDisplayer {
     /// </summary>
     void InitializeComponent(void) {
       this->components = (gcnew System::ComponentModel::Container());
-      this->gl_panel = (gcnew System::Windows::Forms::Panel());
-      this->frame_refresh_timer = (gcnew System::Windows::Forms::Timer(this->components));
-      this->hint_label = (gcnew System::Windows::Forms::Label());
-      this->file_menu_strip = (gcnew System::Windows::Forms::MenuStrip());
-      this->file_tool_strip_menu_item = (gcnew System::Windows::Forms::ToolStripMenuItem());
-      this->open_obj_tool_strip_menu_item = (gcnew System::Windows::Forms::ToolStripMenuItem());
-      this->file_menu_strip->SuspendLayout();
+      this->gl_panel_ = (gcnew System::Windows::Forms::Panel());
+      this->frame_refresh_timer_ = (gcnew System::Windows::Forms::Timer(this->components));
+      this->hint_label_ = (gcnew System::Windows::Forms::Label());
+      this->form_menu_strip_ = (gcnew System::Windows::Forms::MenuStrip());
+      this->file_tool_strip_menu_item_ = (gcnew System::Windows::Forms::ToolStripMenuItem());
+      this->open_obj_tool_strip_menu_item_ = (gcnew System::Windows::Forms::ToolStripMenuItem());
+      this->mode_tool_strip_menu_item_ = (gcnew System::Windows::Forms::ToolStripMenuItem());
+      this->view_basic_demo_tool_strip_menu_item_ = (gcnew System::Windows::Forms::ToolStripMenuItem());
+      this->view_obj_tool_strip_menu_item_ = (gcnew System::Windows::Forms::ToolStripMenuItem());
+      this->view_robot_tool_strip_menu_item_ = (gcnew System::Windows::Forms::ToolStripMenuItem());
+      this->button_switch_rotate_mode_ = (gcnew System::Windows::Forms::Button());
+      this->button_reset_eye_ = (gcnew System::Windows::Forms::Button());
+      this->form_menu_strip_->SuspendLayout();
       this->SuspendLayout();
       // 
-      // gl_panel
+      // gl_panel_
       // 
-      this->gl_panel->Location = System::Drawing::Point(50, 50);
-      this->gl_panel->Name = L"gl_panel";
-      this->gl_panel->Size = System::Drawing::Size(800, 600);
-      this->gl_panel->TabIndex = 0;
+      this->gl_panel_->Location = System::Drawing::Point(50, 50);
+      this->gl_panel_->Name = L"gl_panel_";
+      this->gl_panel_->Size = System::Drawing::Size(800, 600);
+      this->gl_panel_->TabIndex = 0;
       // 
-      // hint_label
+      // hint_label_
       // 
-      this->hint_label->AutoSize = true;
-      this->hint_label->Location = System::Drawing::Point(900, 50);
-      this->hint_label->Name = L"hint_label";
-      this->hint_label->Size = System::Drawing::Size(52, 13);
-      this->hint_label->TabIndex = 1;
-      this->hint_label->Text = L"hint_label";
+      this->hint_label_->AutoSize = true;
+      this->hint_label_->Location = System::Drawing::Point(900, 50);
+      this->hint_label_->Name = L"hint_label_";
+      this->hint_label_->Size = System::Drawing::Size(52, 13);
+      this->hint_label_->TabIndex = 1;
+      this->hint_label_->Text = L"hint_label";
       // 
-      // file_menu_strip
+      // form_menu_strip_
       // 
-      this->file_menu_strip->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem ^>(1) {
-        this->file_tool_strip_menu_item
-      });
-      this->file_menu_strip->Location = System::Drawing::Point(0, 0);
-      this->file_menu_strip->Name = L"file_menu_strip";
-      this->file_menu_strip->Size = System::Drawing::Size(1008, 24);
-      this->file_menu_strip->TabIndex = 2;
-      this->file_menu_strip->Text = L"menuStrip1";
+      this->form_menu_strip_->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->file_tool_strip_menu_item_, 
+        this->mode_tool_strip_menu_item_});
+      this->form_menu_strip_->Location = System::Drawing::Point(0, 0);
+      this->form_menu_strip_->Name = L"form_menu_strip_";
+      this->form_menu_strip_->Size = System::Drawing::Size(1184, 24);
+      this->form_menu_strip_->TabIndex = 2;
+      this->form_menu_strip_->Text = L"menuStrip1";
       // 
-      // file_tool_strip_menu_item
+      // file_tool_strip_menu_item_
       // 
-      this->file_tool_strip_menu_item->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem ^>(1) {
-        this->open_obj_tool_strip_menu_item
-      });
-      this->file_tool_strip_menu_item->Name = L"file_tool_strip_menu_item";
-      this->file_tool_strip_menu_item->Size = System::Drawing::Size(37, 20);
-      this->file_tool_strip_menu_item->Text = L"File";
+      this->file_tool_strip_menu_item_->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) {this->open_obj_tool_strip_menu_item_});
+      this->file_tool_strip_menu_item_->Name = L"file_tool_strip_menu_item_";
+      this->file_tool_strip_menu_item_->Size = System::Drawing::Size(37, 20);
+      this->file_tool_strip_menu_item_->Text = L"File";
       // 
-      // open_obj_tool_strip_menu_item
+      // open_obj_tool_strip_menu_item_
       // 
-      this->open_obj_tool_strip_menu_item->Name = L"open_obj_tool_strip_menu_item";
-      this->open_obj_tool_strip_menu_item->Size = System::Drawing::Size(152, 22);
-      this->open_obj_tool_strip_menu_item->Text = L"Open obj";
+      this->open_obj_tool_strip_menu_item_->Name = L"open_obj_tool_strip_menu_item_";
+      this->open_obj_tool_strip_menu_item_->Size = System::Drawing::Size(123, 22);
+      this->open_obj_tool_strip_menu_item_->Text = L"Open obj";
+      // 
+      // mode_tool_strip_menu_item_
+      // 
+      this->mode_tool_strip_menu_item_->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->view_basic_demo_tool_strip_menu_item_, 
+        this->view_obj_tool_strip_menu_item_, this->view_robot_tool_strip_menu_item_});
+      this->mode_tool_strip_menu_item_->Name = L"mode_tool_strip_menu_item_";
+      this->mode_tool_strip_menu_item_->Size = System::Drawing::Size(50, 20);
+      this->mode_tool_strip_menu_item_->Text = L"Mode";
+      // 
+      // view_basic_demo_tool_strip_menu_item_
+      // 
+      this->view_basic_demo_tool_strip_menu_item_->Name = L"view_basic_demo_tool_strip_menu_item_";
+      this->view_basic_demo_tool_strip_menu_item_->Size = System::Drawing::Size(163, 22);
+      this->view_basic_demo_tool_strip_menu_item_->Text = L"View basic demo";
+      // 
+      // view_obj_tool_strip_menu_item_
+      // 
+      this->view_obj_tool_strip_menu_item_->Name = L"view_obj_tool_strip_menu_item_";
+      this->view_obj_tool_strip_menu_item_->Size = System::Drawing::Size(163, 22);
+      this->view_obj_tool_strip_menu_item_->Text = L"View obj";
+      // 
+      // view_robot_tool_strip_menu_item_
+      // 
+      this->view_robot_tool_strip_menu_item_->Name = L"view_robot_tool_strip_menu_item_";
+      this->view_robot_tool_strip_menu_item_->Size = System::Drawing::Size(163, 22);
+      this->view_robot_tool_strip_menu_item_->Text = L"View robot";
+      // 
+      // button_switch_rotate_mode_
+      // 
+      this->button_switch_rotate_mode_->Location = System::Drawing::Point(900, 250);
+      this->button_switch_rotate_mode_->Name = L"button_switch_rotate_mode_";
+      this->button_switch_rotate_mode_->Size = System::Drawing::Size(125, 25);
+      this->button_switch_rotate_mode_->TabIndex = 3;
+      this->button_switch_rotate_mode_->Text = L"Rotate view";
+      this->button_switch_rotate_mode_->UseVisualStyleBackColor = true;
+      // 
+      // button_reset_eye_
+      // 
+      this->button_reset_eye_->Location = System::Drawing::Point(900, 285);
+      this->button_reset_eye_->Name = L"button_reset_eye_";
+      this->button_reset_eye_->Size = System::Drawing::Size(125, 25);
+      this->button_reset_eye_->TabIndex = 4;
+      this->button_reset_eye_->Text = L"Reset eye (F1)";
+      this->button_reset_eye_->UseVisualStyleBackColor = true;
       // 
       // GLForm
       // 
       this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
       this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-      this->ClientSize = System::Drawing::Size(1008, 730);
-      this->Controls->Add(this->hint_label);
-      this->Controls->Add(this->gl_panel);
-      this->Controls->Add(this->file_menu_strip);
-      this->MainMenuStrip = this->file_menu_strip;
+      this->ClientSize = System::Drawing::Size(1184, 712);
+      this->Controls->Add(this->button_reset_eye_);
+      this->Controls->Add(this->button_switch_rotate_mode_);
+      this->Controls->Add(this->hint_label_);
+      this->Controls->Add(this->gl_panel_);
+      this->Controls->Add(this->form_menu_strip_);
+      this->KeyPreview = true;
+      this->MainMenuStrip = this->form_menu_strip_;
       this->Name = L"GLForm";
       this->Text = L"GLForm";
       this->Load += gcnew System::EventHandler(this, &GLForm::GLForm_Load);
-      this->file_menu_strip->ResumeLayout(false);
-      this->file_menu_strip->PerformLayout();
+      this->form_menu_strip_->ResumeLayout(false);
+      this->form_menu_strip_->PerformLayout();
       this->ResumeLayout(false);
       this->PerformLayout();
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -83,9 +84,36 @@ namespace OpenGLModelDisplayer {
       mesh_->Rotate(rotation_angle, rotation_axis);
     }
 
-    void CreateBoxMesh(const float width, const float length, const float height, const glm::vec3 &translation_vector, const glm::vec3 &color) {
+    void CreateCubeMesh(const float width, const float length, const float height, const glm::vec3 &translation_vector) {
       mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
       GLMesh::AddCube(mesh_, width, length, height);
+      mesh_->Translate(translation_vector);
+      mesh_->SetRandomColors();
+      mesh_->SetNormal();
+      mesh_->Upload();
+    }
+
+    void CreateCubeMesh(const float width, const float length, const float height, const glm::vec3 &translation_vector, const glm::vec3 &color) {
+      mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
+      GLMesh::AddCube(mesh_, width, length, height);
+      mesh_->Translate(translation_vector);
+      mesh_->SetColor(color);
+      mesh_->SetNormal();
+      mesh_->Upload();
+    }
+
+    void CreateConeMesh(const float width, const float length, const float height, const glm::vec3 &translation_vector) {
+      mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
+      GLMesh::AddCone(mesh_, width, length, height);
+      mesh_->Translate(translation_vector);
+      mesh_->SetRandomColors();
+      mesh_->SetNormal();
+      mesh_->Upload();
+    }
+
+    void CreateConeMesh(const float width, const float length, const float height, const glm::vec3 &translation_vector, const glm::vec3 &color) {
+      mesh_ = std::shared_ptr<GLMesh>(new GLMesh());
+      GLMesh::AddCone(mesh_, width, length, height);
       mesh_->Translate(translation_vector);
       mesh_->SetColor(color);
       mesh_->SetNormal();
@@ -236,7 +264,7 @@ namespace OpenGLModelDisplayer {
       std::ifstream obj_file_stream(file_path);
 
       if (!obj_file_stream.is_open()) {
-        std::cerr << "File " + file_path + " not found.";
+        std::cerr << "File " + file_path + " not found.\n";
         return false;
       }
 
@@ -247,12 +275,18 @@ namespace OpenGLModelDisplayer {
       std::vector<glm::vec2> obj_file_uvs;
 
       std::map<std::string, GLMaterial> materials_map;
+      std::map<std::string, std::shared_ptr<HierarchicalMeshNode> > mesh_node_map;
+      mesh_node_map[""] = std::shared_ptr<HierarchicalMeshNode>(new HierarchicalMeshNode());
+
+      std::shared_ptr<HierarchicalMeshNode> target_mesh_node = mesh_node_map[""];
+
       std::string current_material_name;
+
+      bool need_to_calculate_normals_ = false;
 
       std::string line_buffer;
 
       while (std::getline(obj_file_stream, line_buffer)) {
-        std::transform(line_buffer.begin(), line_buffer.end(), line_buffer.begin(), ::tolower);
         std::istringstream input_string_stream(line_buffer);
         std::string line_header;
         input_string_stream >> line_header;
@@ -261,23 +295,26 @@ namespace OpenGLModelDisplayer {
           continue;
         }
 
+        std::transform(line_header.begin(), line_header.end(), line_header.begin(), ::tolower);
+
         if (line_header == "mtllib") {
           std::string mtl_file_path;
           input_string_stream >> mtl_file_path;
 
           std::ifstream mtl_file_stream(file_folder_path + mtl_file_path);
           if (!mtl_file_stream.is_open()) {
-            std::cerr << "File " + file_folder_path + mtl_file_path + " not found.";
+            std::cerr << "File " + file_folder_path + mtl_file_path + " not found.\n";
             continue;
           }
 
           std::string material_name;
           while (std::getline(mtl_file_stream, line_buffer)) {
-            std::transform(line_buffer.begin(), line_buffer.end(), line_buffer.begin(), ::tolower);
             input_string_stream = std::istringstream(line_buffer);
             input_string_stream >> line_header;
+            std::transform(line_header.begin(), line_header.end(), line_header.begin(), ::tolower);
             if (line_header == "newmtl") {
               input_string_stream >> material_name;
+              mesh_node_map[material_name] = std::shared_ptr<HierarchicalMeshNode>(new HierarchicalMeshNode());
             } else if (line_header == "ka") {
               input_string_stream >> materials_map[material_name].ka.x >> materials_map[material_name].ka.y >> materials_map[material_name].ka.z;
             } else if (line_header == "kd") {
@@ -290,7 +327,7 @@ namespace OpenGLModelDisplayer {
               input_string_stream >> texture_file_path;
               GLuint texture_id;
               GLTexture::SetGLTexture(cv::imread(file_folder_path + texture_file_path), &texture_id);
-              root_mesh_node_->SetMeshTextureId(texture_id);
+              mesh_node_map[material_name]->SetMeshTextureId(texture_id);
             } else if (line_header == "map_ks") {
             }
 
@@ -301,79 +338,14 @@ namespace OpenGLModelDisplayer {
           if (materials_map.find(current_material_name) == materials_map.end()) {
             current_material_name = "";
           }
+          target_mesh_node = mesh_node_map[current_material_name];
         } else if (line_header == "o") {
         } else if (line_header == "g") {
         } else if (line_header == "s") {
         } else if (line_header == "v") {
           glm::vec3 vertex;
           input_string_stream >> vertex.x >> vertex.y >> vertex.z;
-          obj_file_vertices.push_back(vertex);
-        } else if (line_header == "f") {
-          std::string vertex_detail;
-
-          std::vector<size_t> face_vertex_indices;
-          std::vector<glm::vec3> face_vertex_kds;
-          std::vector<size_t> face_vt_indices;
-          std::vector<size_t> face_vn_indices;
-
-          while (input_string_stream >> vertex_detail) {
-            std::replace(vertex_detail.begin(), vertex_detail.end(), '/', ' ');
-            std::istringstream vertex_detail_string_stream(vertex_detail);
-
-            size_t face_vertex_index;
-            vertex_detail_string_stream >> face_vertex_index;
-            face_vertex_indices.push_back(face_vertex_index - 1);
-
-            if (current_material_name != "") {
-              face_vertex_kds.push_back(materials_map[current_material_name].kd);
-            }
-
-            //if (vertex_detail_string_stream) {
-            //  size_t face_vt_index;
-            //  vertex_detail_string_stream >> face_vt_index;
-            //  face_vt_indices.push_back(face_vt_index - 1);
-            //}
-
-            //if (vertex_detail_string_stream) {
-            //  size_t face_vn_index;
-            //  vertex_detail_string_stream >> face_vn_index;
-            //  face_vn_indices.push_back(face_vn_index - 1);
-            //}
-          }
-
-          glm::vec3 face_random_color(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
-
-          for (size_t triangle_fan_v1_index = 1; triangle_fan_v1_index < face_vertex_indices.size(); ++triangle_fan_v1_index) {
-            for (size_t triangle_fan_v2_index = triangle_fan_v1_index + 1; triangle_fan_v2_index < face_vertex_indices.size(); ++triangle_fan_v2_index) {
-              root_mesh_node_->AddMeshVertex(obj_file_vertices[face_vertex_indices[0]]);
-              root_mesh_node_->AddMeshVertex(obj_file_vertices[face_vertex_indices[triangle_fan_v1_index]]);
-              root_mesh_node_->AddMeshVertex(obj_file_vertices[face_vertex_indices[triangle_fan_v2_index]]);
-
-              if (face_vertex_kds.size()) {
-              } else {
-                root_mesh_node_->AddMeshColor(face_random_color);
-                root_mesh_node_->AddMeshColor(face_random_color);
-                root_mesh_node_->AddMeshColor(face_random_color);
-              }
-            }
-          }
-
-          //for (const auto &face_vertex_index : face_vertex_indices) {
-          //  root_mesh_node_->AddMeshVertex(obj_file_vertices[face_vertex_index]);
-          //}
-
-          //for (const auto &face_vertex_kd : face_vertex_kds) {
-          //  root_mesh_node_->AddMeshColor(face_vertex_kd);
-          //}
-
-          //for (const auto &face_vt_index : face_vt_indices) {
-          //  root_mesh_node_->AddMeshUv(obj_file_uvs[face_vt_index]);
-          //}
-
-          //for (const auto &face_vn_index : face_vn_indices) {
-          //  root_mesh_node_->AddMeshNormal(obj_file_normals[face_vn_index]);
-          //}
-
+          obj_file_vertices.push_back(vertex);      
         } else if (line_header == "vn") {
           glm::vec3 normal;
           input_string_stream >> normal.x >> normal.y >> normal.z;
@@ -386,16 +358,113 @@ namespace OpenGLModelDisplayer {
           }
           obj_file_uvs.push_back(uv);
         } else if (line_header == "vp") {
+        } else if (line_header == "f") {
+          std::string vertex_detail_string;
+
+          std::vector<size_t> face_vertex_indices;
+          std::vector<size_t> face_vt_indices;
+          std::vector<size_t> face_vn_indices;
+
+          while (input_string_stream >> vertex_detail_string) {
+
+            size_t first_slash_position = vertex_detail_string.find('/');
+            size_t second_slash_position = std::string::npos;
+
+            if (first_slash_position != std::string::npos) {
+              second_slash_position = vertex_detail_string.find('/', first_slash_position + 1);
+            }
+
+            size_t face_vertex_index = 0;
+            for (size_t i = 0; vertex_detail_string[i] && i != first_slash_position; ++i) {
+              if (std::isdigit(vertex_detail_string[i])) {
+                face_vertex_index = face_vertex_index * 10 + vertex_detail_string[i] - '0';
+              }
+            }
+            face_vertex_indices.push_back(face_vertex_index - 1);
+
+            if (first_slash_position != std::string::npos) {
+              size_t face_vt_index = 0;
+              bool has_number = false;
+              for (size_t i = first_slash_position + 1; vertex_detail_string[i] && i != second_slash_position; ++i) {
+                if (std::isdigit(vertex_detail_string[i])) {
+                  face_vt_index = face_vt_index * 10 + vertex_detail_string[i] - '0';
+                  has_number = true;
+                }
+              }
+              if (has_number) {
+                face_vt_indices.push_back(face_vt_index - 1);
+              }
+            }
+
+            if (second_slash_position != std::string::npos) {
+              size_t face_vn_index = 0;
+              bool has_number = false;
+              for (size_t i = second_slash_position + 1; vertex_detail_string[i]; ++i) {
+                if (std::isdigit(vertex_detail_string[i])) {
+                  face_vn_index = face_vn_index * 10 + vertex_detail_string[i] - '0';
+                  has_number = true;
+                }
+              }
+              if (has_number) {
+                face_vn_indices.push_back(face_vn_index - 1);
+              }
+            }
+          }
+
+          glm::vec3 face_color(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
+          if (current_material_name != "") {
+            //face_color = materials_map[current_material_name].kd;
+          }
+
+          for (size_t triangle_fan_v1_index = 1; triangle_fan_v1_index < face_vertex_indices.size(); ++triangle_fan_v1_index) {
+            for (size_t triangle_fan_v2_index = triangle_fan_v1_index + 1; triangle_fan_v2_index < face_vertex_indices.size(); ++triangle_fan_v2_index) {
+              target_mesh_node->AddMeshVertex(obj_file_vertices[face_vertex_indices[0]]);
+              target_mesh_node->AddMeshVertex(obj_file_vertices[face_vertex_indices[triangle_fan_v1_index]]);
+              target_mesh_node->AddMeshVertex(obj_file_vertices[face_vertex_indices[triangle_fan_v2_index]]);
+
+              target_mesh_node->AddMeshColor(face_color);
+              target_mesh_node->AddMeshColor(face_color);
+              target_mesh_node->AddMeshColor(face_color);
+
+              if (face_vt_indices.size() == face_vertex_indices.size()) {
+                target_mesh_node->AddMeshUv(obj_file_uvs[face_vt_indices[0]]);
+                target_mesh_node->AddMeshUv(obj_file_uvs[face_vt_indices[triangle_fan_v1_index]]);
+                target_mesh_node->AddMeshUv(obj_file_uvs[face_vt_indices[triangle_fan_v2_index]]);
+              } else {
+              }
+
+              if (face_vn_indices.size() == face_vertex_indices.size()) {
+                target_mesh_node->AddMeshNormal(obj_file_normals[face_vn_indices[0]]);
+                target_mesh_node->AddMeshNormal(obj_file_normals[face_vn_indices[triangle_fan_v1_index]]);
+                target_mesh_node->AddMeshNormal(obj_file_normals[face_vn_indices[triangle_fan_v2_index]]);
+              } else {
+                need_to_calculate_normals_ = true;
+              }
+            }
+          }
         } else {
         }
       }
 
-      root_mesh_node_->AlignPositionToOrigin();
-      root_mesh_node_->SetNormals();
+      std::shared_ptr<HierarchicalMeshNode> previous_mesh_node = root_mesh_node_;
+
+      for (const auto &mesh_node_key_value : mesh_node_map) {
+        std::shared_ptr<HierarchicalMeshNode> current_mesh_node = mesh_node_key_value.second;
+        all_mesh_nodes_.push_back(current_mesh_node);
+        current_mesh_node->AlignPositionToOrigin();
+
+        if (need_to_calculate_normals_) {
+          current_mesh_node->SetNormals();
+        }
+
+        previous_mesh_node->SetNextMeshNode(current_mesh_node);
+
+        previous_mesh_node = current_mesh_node;
+      }
+
       Upload();
 
       return true;
-
     }
 
     virtual void Update(const float delta_time) {
