@@ -332,7 +332,7 @@ namespace OpenGLModelDisplayer {
 
       float aspect_ratio = gl_panel_->Size.Width / (float)gl_panel_->Size.Height;
 
-      glm::mat4 projection_matrix = glm::perspective(45.0f, aspect_ratio, 0.01f, 1000.0f);
+      glm::mat4 projection_matrix = glm::perspective(glm::radians(45.0f), aspect_ratio, 0.01f, 1000.0f);
 
       glm::mat4 view_matrix = glm::lookAt(eye_position * eye_position_scale, look_at_position, glm::vec3(0.0f, 1.0f, 0.0f));
 
@@ -485,11 +485,11 @@ namespace OpenGLModelDisplayer {
       program_status = new_program_status;
 
       if (program_status == VIEW_BASIC_DEMO) {
-        hint_label_->Text = " Press mouse : Adjust view angle \n Scroll mouse : Change eyes distance \n F1 : Reset eye";
+        hint_label_->Text = " Press mouse : Adjust view angle \n Scroll mouse : Change eyes distance \n ";
       } else if (program_status == VIEW_OBJ) {
-        hint_label_->Text = " Press mouse : Adjust view angle \n Scroll mouse : Change eyes distance \n F1 : Reset eye";
+        hint_label_->Text = " Press mouse : Adjust view angle \n Scroll mouse : Change eyes distance \n ";
       } else if (program_status == VIEW_ROBOT) {
-        hint_label_->Text = " Press mouse : Adjust view angle \n Scroll mouse : Change eyes distance \n F1 : Reset eye & Stand \n F2 : Walk \n F3 : Run \n F4 : Kungfu \n F5 : Spike";
+        hint_label_->Text = " Press mouse : Adjust view angle \n Scroll mouse : Change eyes distance \n F1 : Stand \n F2 : Walk \n F3 : Run \n F4 : Kungfu \n F5 : Spike";
       }
 
       ResetEye();
