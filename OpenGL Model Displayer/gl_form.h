@@ -68,7 +68,8 @@ namespace OpenGLModelDisplayer {
   GLint shader_uniform_texture_flag_id;
 
   const int FPS = 60;
-  const float FRAME_REFRESH_TIME = 1000.0f / FPS;
+  const float REFRESH_TIME_SCALE_FOR_NOT_ACCURATE_INTERVEL = 10.0;
+  const float FRAME_REFRESH_TIME = (1000.0 / FPS) / REFRESH_TIME_SCALE_FOR_NOT_ACCURATE_INTERVEL;
 
   const glm::vec3 DEFAULT_EYE_POSITION(3, 3, 3);
   glm::vec3 eye_position = DEFAULT_EYE_POSITION;
