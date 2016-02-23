@@ -10,6 +10,7 @@ namespace OpenGLModelDisplayer {
   public:
 
     static void SetGLTexture(const cv::Mat &cv_image, GLuint *texture_id) {
+      glDeleteTextures(1, texture_id);
       cv::Mat image_for_gl_texture;
       cv::cvtColor(cv_image, image_for_gl_texture, CV_BGR2RGB);
       cv::flip(image_for_gl_texture, image_for_gl_texture, 0);
