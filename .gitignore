@@ -1,10 +1,12 @@
 *.swp
-*.sdf
-*.opensdf
 *.db
 *.opendb
+*.sdf
+*.opensdf
 *.log
 *.tlog
 *.cache
 
 .vs/
+data/
+temp/
