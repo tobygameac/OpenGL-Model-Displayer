@@ -1,4 +1,4 @@
 OpenGL-Model-Displayer
 ====================
 
-HW1
+Rendering 3d model files

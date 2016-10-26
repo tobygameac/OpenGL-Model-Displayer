@@ -1,6 +1,8 @@
 *.swp
 *.sdf
 *.opensdf
+*.db
+*.opendb
 *.log
 *.tlog
 *.cache
