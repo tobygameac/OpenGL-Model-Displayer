@@ -252,6 +252,8 @@ public:
     @param missch The character used to specify missing measurements. It should not be a digit.
         Although it's a non-numerical value, it surely does not affect the decision of whether the
         variable ordered or categorical.
+    @note If the dataset only contains input variables and no responses, use responseStartIdx = -2
+        and responseEndIdx = 0. The output variables vector will just contain zeros.
      */
     static Ptr<TrainData> loadFromCSV(const String& filename,
                                       int headerLineCount,
@@ -673,10 +675,18 @@ public:
 
     /** @brief Retrieves all the support vectors
 
-    The method returns all the support vector as floating-point matrix, where support vectors are
+    The method returns all the support vectors as a floating-point matrix, where support vectors are
     stored as matrix rows.
      */
     CV_WRAP virtual Mat getSupportVectors() const = 0;
+
+    /** @brief Retrieves all the uncompressed support vectors of a linear %SVM
+
+    The method returns all the uncompressed support vectors of a linear %SVM that the compressed
+    support vector, used for prediction, was derived from. They are returned in a floating-point
+    matrix, where the support vectors are stored as matrix rows.
+     */
+    CV_WRAP Mat getUncompressedSupportVectors() const;
 
     /** @brief Retrieves the decision function
 
@@ -790,7 +800,7 @@ public:
     Returns vector of covariation matrices. Number of matrices is the number of gaussian mixtures,
     each matrix is a square floating-point matrix NxN, where N is the space dimensionality.
      */
-    virtual void getCovs(std::vector<Mat>& covs) const = 0;
+    CV_WRAP virtual void getCovs(CV_OUT std::vector<Mat>& covs) const = 0;
 
     /** @brief Returns a likelihood logarithm value and an index of the most probable mixture component
     for the given sample.
@@ -804,7 +814,7 @@ public:
     the sample. First element is an index of the most probable mixture component for the given
     sample.
      */
-    CV_WRAP CV_WRAP virtual Vec2d predict2(InputArray sample, OutputArray probs) const = 0;
+    CV_WRAP virtual Vec2d predict2(InputArray sample, OutputArray probs) const = 0;
 
     /** @brief Estimate the Gaussian mixture parameters from a samples set.
 
@@ -1241,7 +1251,7 @@ Additional flags for StatModel::train are available: ANN_MLP::TrainFlags.
 
 @sa @ref ml_intro_ann
  */
-class CV_EXPORTS ANN_MLP : public StatModel
+class CV_EXPORTS_W ANN_MLP : public StatModel
 {
 public:
     /** Available training methods */
@@ -1255,10 +1265,10 @@ public:
     @param param1 passed to setRpropDW0 for ANN_MLP::RPROP and to setBackpropWeightScale for ANN_MLP::BACKPROP
     @param param2 passed to setRpropDWMin for ANN_MLP::RPROP and to setBackpropMomentumScale for ANN_MLP::BACKPROP.
     */
-    virtual void setTrainMethod(int method, double param1 = 0, double param2 = 0) = 0;
+    CV_WRAP virtual void setTrainMethod(int method, double param1 = 0, double param2 = 0) = 0;
 
     /** Returns current training method */
-    virtual int getTrainMethod() const = 0;
+    CV_WRAP virtual int getTrainMethod() const = 0;
 
     /** Initialize the activation function for each neuron.
     Currently the default and the only fully supported activation function is ANN_MLP::SIGMOID_SYM.
@@ -1266,79 +1276,79 @@ public:
     @param param1 The first parameter of the activation function, \f$\alpha\f$. Default value is 0.
     @param param2 The second parameter of the activation function, \f$\beta\f$. Default value is 0.
     */
-    virtual void setActivationFunction(int type, double param1 = 0, double param2 = 0) = 0;
+    CV_WRAP virtual void setActivationFunction(int type, double param1 = 0, double param2 = 0) = 0;
 
     /**  Integer vector specifying the number of neurons in each layer including the input and output layers.
     The very first element specifies the number of elements in the input layer.
     The last element - number of elements in the output layer. Default value is empty Mat.
     @sa getLayerSizes */
-    virtual void setLayerSizes(InputArray _layer_sizes) = 0;
+    CV_WRAP virtual void setLayerSizes(InputArray _layer_sizes) = 0;
 
     /**  Integer vector specifying the number of neurons in each layer including the input and output layers.
     The very first element specifies the number of elements in the input layer.
     The last element - number of elements in the output layer.
     @sa setLayerSizes */
-    virtual cv::Mat getLayerSizes() const = 0;
+    CV_WRAP virtual cv::Mat getLayerSizes() const = 0;
 
     /** Termination criteria of the training algorithm.
     You can specify the maximum number of iterations (maxCount) and/or how much the error could
     change between the iterations to make the algorithm continue (epsilon). Default value is
     TermCriteria(TermCriteria::MAX_ITER + TermCriteria::EPS, 1000, 0.01).*/
     /** @see setTermCriteria */
-    virtual TermCriteria getTermCriteria() const = 0;
+    CV_WRAP virtual TermCriteria getTermCriteria() const = 0;
     /** @copybrief getTermCriteria @see getTermCriteria */
-    virtual void setTermCriteria(TermCriteria val) = 0;
+    CV_WRAP virtual void setTermCriteria(TermCriteria val) = 0;
 
     /** BPROP: Strength of the weight gradient term.
     The recommended value is about 0.1. Default value is 0.1.*/
     /** @see setBackpropWeightScale */
-    virtual double getBackpropWeightScale() const = 0;
+    CV_WRAP virtual double getBackpropWeightScale() const = 0;
     /** @copybrief getBackpropWeightScale @see getBackpropWeightScale */
-    virtual void setBackpropWeightScale(double val) = 0;
+    CV_WRAP virtual void setBackpropWeightScale(double val) = 0;
 
     /** BPROP: Strength of the momentum term (the difference between weights on the 2 previous iterations).
     This parameter provides some inertia to smooth the random fluctuations of the weights. It can
     vary from 0 (the feature is disabled) to 1 and beyond. The value 0.1 or so is good enough.
     Default value is 0.1.*/
     /** @see setBackpropMomentumScale */
-    virtual double getBackpropMomentumScale() const = 0;
+    CV_WRAP virtual double getBackpropMomentumScale() const = 0;
     /** @copybrief getBackpropMomentumScale @see getBackpropMomentumScale */
-    virtual void setBackpropMomentumScale(double val) = 0;
+    CV_WRAP virtual void setBackpropMomentumScale(double val) = 0;
 
     /** RPROP: Initial value \f$\Delta_0\f$ of update-values \f$\Delta_{ij}\f$.
     Default value is 0.1.*/
     /** @see setRpropDW0 */
-    virtual double getRpropDW0() const = 0;
+    CV_WRAP virtual double getRpropDW0() const = 0;
     /** @copybrief getRpropDW0 @see getRpropDW0 */
-    virtual void setRpropDW0(double val) = 0;
+    CV_WRAP virtual void setRpropDW0(double val) = 0;
 
     /** RPROP: Increase factor \f$\eta^+\f$.
     It must be \>1. Default value is 1.2.*/
     /** @see setRpropDWPlus */
-    virtual double getRpropDWPlus() const = 0;
+    CV_WRAP virtual double getRpropDWPlus() const = 0;
     /** @copybrief getRpropDWPlus @see getRpropDWPlus */
-    virtual void setRpropDWPlus(double val) = 0;
+    CV_WRAP virtual void setRpropDWPlus(double val) = 0;
 
     /** RPROP: Decrease factor \f$\eta^-\f$.
     It must be \<1. Default value is 0.5.*/
     /** @see setRpropDWMinus */
-    virtual double getRpropDWMinus() const = 0;
+    CV_WRAP virtual double getRpropDWMinus() const = 0;
     /** @copybrief getRpropDWMinus @see getRpropDWMinus */
-    virtual void setRpropDWMinus(double val) = 0;
+    CV_WRAP virtual void setRpropDWMinus(double val) = 0;
 
     /** RPROP: Update-values lower limit \f$\Delta_{min}\f$.
     It must be positive. Default value is FLT_EPSILON.*/
     /** @see setRpropDWMin */
-    virtual double getRpropDWMin() const = 0;
+    CV_WRAP virtual double getRpropDWMin() const = 0;
     /** @copybrief getRpropDWMin @see getRpropDWMin */
-    virtual void setRpropDWMin(double val) = 0;
+    CV_WRAP virtual void setRpropDWMin(double val) = 0;
 
     /** RPROP: Update-values upper limit \f$\Delta_{max}\f$.
     It must be \>1. Default value is 50.*/
     /** @see setRpropDWMax */
-    virtual double getRpropDWMax() const = 0;
+    CV_WRAP virtual double getRpropDWMax() const = 0;
     /** @copybrief getRpropDWMax @see getRpropDWMax */
-    virtual void setRpropDWMax(double val) = 0;
+    CV_WRAP virtual void setRpropDWMax(double val) = 0;
 
     /** possible activation functions */
     enum ActivationFunctions {
@@ -1371,14 +1381,14 @@ public:
         NO_OUTPUT_SCALE = 4
     };
 
-    virtual Mat getWeights(int layerIdx) const = 0;
+    CV_WRAP virtual Mat getWeights(int layerIdx) const = 0;
 
     /** @brief Creates empty model
 
     Use StatModel::train to train the model, Algorithm::load\<ANN_MLP\>(filename) to load the pre-trained model.
     Note that the train method has optional flags: ANN_MLP::TrainFlags.
      */
-    static Ptr<ANN_MLP> create();
+    CV_WRAP static Ptr<ANN_MLP> create();
 };
 
 /****************************************************************************************\
@@ -1479,10 +1489,6 @@ public:
 @param samples returned samples array
 */
 CV_EXPORTS void randMVNormal( InputArray mean, InputArray cov, int nsamples, OutputArray samples);
-
-/** @brief Generates sample from gaussian mixture distribution */
-CV_EXPORTS void randGaussMixture( InputArray means, InputArray covs, InputArray weights,
-                                  int nsamples, OutputArray samples, OutputArray sampClasses );
 
 /** @brief Creates test set */
 CV_EXPORTS void createConcentricSpheresTestSet( int nsamples, int nfeatures, int nclasses,
