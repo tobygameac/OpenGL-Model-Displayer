@@ -47,6 +47,8 @@ public:
 
 private:
 
+  virtual void Upload();
+
   glm::vec3 moving_speed_;
 
   glm::vec3 moving_radius_;
@@ -54,9 +56,6 @@ private:
 
   glm::vec3 walking_speed_;
   glm::vec3 running_speed_;
-
-
-  virtual void Upload();
 
   std::shared_ptr<HierarchicalMeshNode> torso_mesh_node_;
 

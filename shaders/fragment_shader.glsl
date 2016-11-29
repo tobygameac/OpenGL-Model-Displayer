@@ -9,10 +9,10 @@ uniform mat4 inverse_modelview_matrix;
 uniform lowp float texture_flag;
 uniform sampler2D texture;
 
-varying vec4 world_model_position;
-varying vec3 normal_direction;
-varying vec3 fragment_color;
-varying vec2 fragment_vertex_uv;
+in vec4 world_model_position;
+in vec3 normal_direction;
+in vec3 fragment_color;
+in vec2 fragment_vertex_uv;
 
 vec4 scene_ambient = vec4(0.2, 0.2, 0.2, 1.0);
 

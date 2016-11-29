@@ -16,28 +16,28 @@ OpenGLModelDisplayer::OpenGLModelDisplayer(QWidget *parent)
     robot.BuildSimpleMesh();
   }
 
-  ChangeProgramStatus(VIEW_ROBOT);
+  ChangeProgramStatus(ProgramStatus::VIEW_BASIC_DEMO);
 
   connect(ui.action_open_obj_, SIGNAL(triggered()),
-    this, SLOT(OnActionTriggeredOpenObj()));
+    this, SLOT(OnActionTriggered()));
 
   connect(ui.action_load_texture, SIGNAL(triggered()),
-    this, SLOT(OnActionTriggeredLoadTexture()));
+    this, SLOT(OnActionTriggered()));
 
   connect(ui.action_view_basic_demo_, SIGNAL(triggered()),
-    this, SLOT(OnActionTriggeredViewBasicDemo()));
+    this, SLOT(OnActionTriggered()));
 
   connect(ui.action_view_obj_, SIGNAL(triggered()),
-    this, SLOT(OnActionTriggeredViewObj()));
+    this, SLOT(OnActionTriggered()));
 
   connect(ui.action_view_robot_, SIGNAL(triggered()),
-    this, SLOT(OnActionTriggeredViewRobot()));
+    this, SLOT(OnActionTriggered()));
 
   connect(ui.button_switch_rotate_mode_, SIGNAL(clicked()),
-    this, SLOT(OnButtonClickedSwitchRotateMode()));
+    this, SLOT(OnButtonClicked()));
 
   connect(ui.button_reset_eye_, SIGNAL(clicked()),
-    this, SLOT(OnButtonClickedResetEye()));
+    this, SLOT(OnButtonClicked()));
 
   connect(&q_timer, SIGNAL(timeout()),
     this, SLOT(RefreshFrame()));
@@ -137,65 +137,61 @@ void OpenGLModelDisplayer::RenderingOnGLCanvas() {
   SwapBuffers(hdc);
 }
 
-void OpenGLModelDisplayer::OnActionTriggeredOpenObj() {
-  QStringList q_file_paths = QFileDialog::getOpenFileNames(this,
-    tr("Open obj files."), "..//data//", tr("Obj Files (*.obj)"));
+void OpenGLModelDisplayer::OnActionTriggered() {
+  QAction *sender_action = static_cast<QAction *>(this->sender());
 
-  if (q_file_paths.isEmpty()) {
-    return;
-  }
+  if (sender_action == ui.action_open_obj_) {
+    QStringList q_file_paths = QFileDialog::getOpenFileNames(this,
+      tr("Open obj files."), "..//data//", tr("Obj Files (*.obj)"));
 
-  obj_models.clear();
+    if (q_file_paths.isEmpty()) {
+      return;
+    }
 
-  std::vector<std::string> obj_paths;
-  for (const QString &q_file_path : q_file_paths) {
-    std::string obj_path = q_file_path.toUtf8().constData();
-    GLSimpleModel obj_model;
-    obj_model.BuildMeshFromObjFile(obj_path);
-    obj_models.push_back(obj_model);
+    obj_models.clear();
+
+    std::vector<std::string> obj_paths;
+    for (const QString &q_file_path : q_file_paths) {
+      std::string obj_path = q_file_path.toUtf8().constData();
+      GLSimpleModel obj_model;
+      obj_model.BuildMeshFromObjFile(obj_path);
+      obj_models.push_back(obj_model);
+      ChangeProgramStatus(VIEW_OBJ);
+    }
+  } else if (sender_action == ui.action_load_texture) {
+    QString q_file_path = QFileDialog::getOpenFileName(this,
+      tr("Open an image file."), "..//data//", tr("Image Files (*.*)"));
+
+    if (q_file_path.isEmpty()) {
+      return;
+    }
+
+    std::string file_path = q_file_path.toUtf8().constData();
+
+    cv::Mat texture = cv::imread(file_path);
+    GLuint texture_id;
+    GLTexture::SetGLTexture(texture, &texture_id);
+    for (GLSimpleModel &obj_model : obj_models) {
+      obj_model.SetTextureID(texture_id);
+    }
+  } else if (sender_action == ui.action_view_basic_demo_) {
+    ChangeProgramStatus(VIEW_BASIC_DEMO);
+  } else if (sender_action == ui.action_view_obj_) {
     ChangeProgramStatus(VIEW_OBJ);
+  } else if (sender_action == ui.action_view_robot_) {
+    ChangeProgramStatus(VIEW_ROBOT);
   }
 }
 
-void OpenGLModelDisplayer::OnActionTriggeredLoadTexture() {
-  QString q_file_path = QFileDialog::getOpenFileName(this,
-    tr("Open an image file."), "..//data//", tr("Image Files (*.*)"));
+void OpenGLModelDisplayer::OnButtonClicked() {
+  QPushButton *sender_button = static_cast<QPushButton *>(this->sender());
 
-  if (q_file_path.isEmpty()) {
-    return;
+  if (sender_button == ui.button_switch_rotate_mode_) {
+    rotate_view_matrix = !rotate_view_matrix;
+    //button_switch_rotate_mode_->Text = rotate_view_matrix ? "Rotate view" : "Rotate model";
+  } else if (sender_button == ui.button_reset_eye_) {
+    ResetEye();
   }
-
-  std::string file_path = q_file_path.toUtf8().constData();
-
-  cv::Mat texture = cv::imread(file_path);
-  GLuint texture_id;
-  GLTexture::SetGLTexture(texture, &texture_id);
-  for (GLSimpleModel &obj_model : obj_models) {
-    obj_model.SetTextureID(texture_id);
-  }
-
-}
-
-void OpenGLModelDisplayer::OnActionTriggeredViewBasicDemo() {
-  ChangeProgramStatus(VIEW_BASIC_DEMO);
-
-}
-
-void OpenGLModelDisplayer::OnActionTriggeredViewObj() {
-  ChangeProgramStatus(VIEW_OBJ);
-}
-
-void OpenGLModelDisplayer::OnActionTriggeredViewRobot() {
-  ChangeProgramStatus(VIEW_ROBOT);
-}
-
-void OpenGLModelDisplayer::OnButtonClickedSwitchRotateMode() {
-  rotate_view_matrix = !rotate_view_matrix;
-  //button_switch_rotate_mode_->Text = rotate_view_matrix ? "Rotate view" : "Rotate model";
-}
-
-void OpenGLModelDisplayer::OnButtonClickedResetEye() {
-  ResetEye();
 }
 
 void OpenGLModelDisplayer::RefreshFrame() {
@@ -238,7 +234,9 @@ bool OpenGLModelDisplayer::eventFilter(QObject *object, QEvent *q_event) {
   if (object == this) {
 
   } else if (object == ui.frame_gl_canvas_) {
+
     if (q_event->type() == QEvent::MouseMove) {
+
       QMouseEvent *mouse_event = static_cast<QMouseEvent *>(q_event);
 
       if (is_dragging_panel) {
@@ -255,13 +253,43 @@ bool OpenGLModelDisplayer::eventFilter(QObject *object, QEvent *q_event) {
     } else if (q_event->type() == QEvent::MouseButtonRelease) {
       is_dragging_panel = false;
     } else if (q_event->type() == QEvent::Wheel) {
+
       QWheelEvent *wheel_event = static_cast<QWheelEvent *>(q_event);
+
       double wheel_amount = wheel_event->angleDelta().y();
       eye_position_scale *= (wheel_amount < 0) ? (1.0f / EYE_POSITION_SCALE_PER_SCROLLING) : EYE_POSITION_SCALE_PER_SCROLLING;
 
       RefreshFrame();
     } else if (q_event->type() == QEvent::KeyPress) {
+
       QKeyEvent *key_event = static_cast<QKeyEvent *>(q_event);
+
+      switch (key_event->key()) {
+      case Qt::Key::Key_W:
+      case Qt::Key::Key_Up:
+        eye_position.y += 1;
+        look_at_position.y += 1;
+        break;
+      case Qt::Key::Key_A:
+      case Qt::Key::Key_Left:
+        eye_position.x -= 1;
+        look_at_position.x -= 1;
+        break;
+      case Qt::Key::Key_S:
+      case Qt::Key::Key_Down:
+        eye_position.y -= 1;
+        look_at_position.y -= 1;
+        break;
+      case Qt::Key::Key_D:
+      case Qt::Key::Key_Right:
+        eye_position.x += 1;
+        look_at_position.x += 1;
+        break;
+      case Qt::Key::Key_L:
+        is_viewing_mesh_line = !is_viewing_mesh_line;
+        glPolygonMode(GL_FRONT_AND_BACK, is_viewing_mesh_line ? GL_LINE : GL_FILL);
+        break;
+      }
 
       if (program_status == VIEW_BASIC_DEMO) {
       } else if (program_status == VIEW_OBJ) {
@@ -283,26 +311,6 @@ bool OpenGLModelDisplayer::eventFilter(QObject *object, QEvent *q_event) {
           break;
         case Qt::Key::Key_F5:
           robot.SpikeMode();
-          break;
-        case Qt::Key::Key_W:
-        case Qt::Key::Key_Up:
-          eye_position.y += 1;
-          look_at_position.y += 1;
-          break;
-        case Qt::Key::Key_A:
-        case Qt::Key::Key_Left:
-          eye_position.x -= 1;
-          look_at_position.x -= 1;
-          break;
-        case Qt::Key::Key_S:
-        case Qt::Key::Key_Down:
-          eye_position.y -= 1;
-          look_at_position.y -= 1;
-          break;
-        case Qt::Key::Key_D:
-        case Qt::Key::Key_Right:
-          eye_position.x += 1;
-          look_at_position.x += 1;
           break;
         }
       }

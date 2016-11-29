@@ -2,7 +2,6 @@
 
 #include "gl_robot.h"
 
-
 GLRobot::GLRobot() :
   GLHierarchicalModel(),
 

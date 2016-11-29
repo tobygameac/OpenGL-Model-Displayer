@@ -423,9 +423,8 @@ protected:
           }
         }
 
-        glm::vec3 face_color(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
-        //glm::vec3 face_color(1, 0, 0);
-
+        //glm::vec3 face_color(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
+        glm::vec3 face_color(0.5, 0.5, 0.5);
 
         if (current_material_name != "") {
           //face_color = materials_map[current_material_name].kd;

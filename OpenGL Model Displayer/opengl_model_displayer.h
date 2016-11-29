@@ -46,19 +46,9 @@ public:
 
   private slots:
 
-  void OnActionTriggeredOpenObj();
+  void OnActionTriggered();
 
-  void OnActionTriggeredLoadTexture();
-
-  void OnActionTriggeredViewBasicDemo();
-
-  void OnActionTriggeredViewObj();
-
-  void OnActionTriggeredViewRobot();
-
-  void OnButtonClickedSwitchRotateMode();
-
-  void OnButtonClickedResetEye();
+  void OnButtonClicked();
 
   void RefreshFrame();
 
@@ -85,16 +75,17 @@ private:
   const int FPS = 60;
   const float FRAME_REFRESH_TIME = (1000.0 / FPS);
 
-  const glm::vec3 DEFAULT_EYE_POSITION = glm::vec3(3, 3, 3);
+  const glm::vec3 DEFAULT_EYE_POSITION = glm::vec3(0, 0, 1);
   glm::vec3 eye_position = glm::vec3(DEFAULT_EYE_POSITION);
   glm::vec3 look_at_position = glm::vec3(0.0, 0.0, 0.0);
 
   const float EYE_POSITION_SCALE_PER_SCROLLING = 0.9f;
   float eye_position_scale = 1.0;
 
-  const glm::vec3 ROTATED_DEGREE_PER_SECOND = glm::vec3(0.0, 360.0 / 8.0, 0.0);
+  const glm::vec3 ROTATED_DEGREE_PER_SECOND;// = glm::vec3(0.0, 360.0 / 8.0, 0.0);
   glm::vec3 rotated_degree;
 
+  bool is_viewing_mesh_line = false;
   bool is_dragging_panel = false;
   bool rotate_view_matrix = false;
 

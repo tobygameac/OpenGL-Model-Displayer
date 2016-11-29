@@ -90,6 +90,7 @@
     <ClCompile Include="gl_robot.cpp" />
     <ClCompile Include="gl_shader.cpp" />
     <ClCompile Include="gl_simple_model.cpp" />
+    <ClCompile Include="gl_texture.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="opengl_model_displayer.cpp" />
   </ItemGroup>

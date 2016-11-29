@@ -19,8 +19,8 @@
 
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_OpenGLModelDisplayer_t {
-    QByteArrayData data[10];
-    char stringdata0[228];
+    QByteArrayData data[5];
+    char stringdata0[69];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -30,24 +30,14 @@ struct qt_meta_stringdata_OpenGLModelDisplayer_t {
 static const qt_meta_stringdata_OpenGLModelDisplayer_t qt_meta_stringdata_OpenGLModelDisplayer = {
     {
 QT_MOC_LITERAL(0, 0, 20), // "OpenGLModelDisplayer"
-QT_MOC_LITERAL(1, 21, 24), // "OnActionTriggeredOpenObj"
-QT_MOC_LITERAL(2, 46, 0), // ""
-QT_MOC_LITERAL(3, 47, 28), // "OnActionTriggeredLoadTexture"
-QT_MOC_LITERAL(4, 76, 30), // "OnActionTriggeredViewBasicDemo"
-QT_MOC_LITERAL(5, 107, 24), // "OnActionTriggeredViewObj"
-QT_MOC_LITERAL(6, 132, 26), // "OnActionTriggeredViewRobot"
-QT_MOC_LITERAL(7, 159, 31), // "OnButtonClickedSwitchRotateMode"
-QT_MOC_LITERAL(8, 191, 23), // "OnButtonClickedResetEye"
-QT_MOC_LITERAL(9, 215, 12) // "RefreshFrame"
+QT_MOC_LITERAL(1, 21, 17), // "OnActionTriggered"
+QT_MOC_LITERAL(2, 39, 0), // ""
+QT_MOC_LITERAL(3, 40, 15), // "OnButtonClicked"
+QT_MOC_LITERAL(4, 56, 12) // "RefreshFrame"
 
     },
-    "OpenGLModelDisplayer\0OnActionTriggeredOpenObj\0"
-    "\0OnActionTriggeredLoadTexture\0"
-    "OnActionTriggeredViewBasicDemo\0"
-    "OnActionTriggeredViewObj\0"
-    "OnActionTriggeredViewRobot\0"
-    "OnButtonClickedSwitchRotateMode\0"
-    "OnButtonClickedResetEye\0RefreshFrame"
+    "OpenGLModelDisplayer\0OnActionTriggered\0"
+    "\0OnButtonClicked\0RefreshFrame"
 };
 #undef QT_MOC_LITERAL
 
@@ -57,7 +47,7 @@ static const uint qt_meta_data_OpenGLModelDisplayer[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-       8,   14, // methods
+       3,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -65,21 +55,11 @@ static const uint qt_meta_data_OpenGLModelDisplayer[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,   54,    2, 0x08 /* Private */,
-       3,    0,   55,    2, 0x08 /* Private */,
-       4,    0,   56,    2, 0x08 /* Private */,
-       5,    0,   57,    2, 0x08 /* Private */,
-       6,    0,   58,    2, 0x08 /* Private */,
-       7,    0,   59,    2, 0x08 /* Private */,
-       8,    0,   60,    2, 0x08 /* Private */,
-       9,    0,   61,    2, 0x08 /* Private */,
+       1,    0,   29,    2, 0x08 /* Private */,
+       3,    0,   30,    2, 0x08 /* Private */,
+       4,    0,   31,    2, 0x08 /* Private */,
 
  // slots: parameters
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -93,14 +73,9 @@ void OpenGLModelDisplayer::qt_static_metacall(QObject *_o, QMetaObject::Call _c,
         OpenGLModelDisplayer *_t = static_cast<OpenGLModelDisplayer *>(_o);
         Q_UNUSED(_t)
         switch (_id) {
-        case 0: _t->OnActionTriggeredOpenObj(); break;
-        case 1: _t->OnActionTriggeredLoadTexture(); break;
-        case 2: _t->OnActionTriggeredViewBasicDemo(); break;
-        case 3: _t->OnActionTriggeredViewObj(); break;
-        case 4: _t->OnActionTriggeredViewRobot(); break;
-        case 5: _t->OnButtonClickedSwitchRotateMode(); break;
-        case 6: _t->OnButtonClickedResetEye(); break;
-        case 7: _t->RefreshFrame(); break;
+        case 0: _t->OnActionTriggered(); break;
+        case 1: _t->OnButtonClicked(); break;
+        case 2: _t->RefreshFrame(); break;
         default: ;
         }
     }
@@ -132,13 +107,13 @@ int OpenGLModelDisplayer::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 8)
+        if (_id < 3)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 8;
+        _id -= 3;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 8)
+        if (_id < 3)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 8;
+        _id -= 3;
     }
     return _id;
 }
