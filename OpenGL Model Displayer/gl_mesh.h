@@ -21,7 +21,13 @@ public:
 
   GLMesh();
 
+  GLMesh(const GLMesh &other);
+
   ~GLMesh();
+
+  GLMesh &operator=(const GLMesh &other);
+
+  void DeepCopy(const GLMesh &other);
 
   static void AddCube(std::shared_ptr<GLMesh> mesh, const float size);
 
@@ -74,8 +80,8 @@ public:
 private:
 
   GLuint vbo_vertices_;
-  GLuint vbo_normals_;
   GLuint vbo_colors_;
+  GLuint vbo_normals_;
   GLuint vbo_uvs_;
 
   bool texture_flag_;

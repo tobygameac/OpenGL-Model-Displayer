@@ -5,11 +5,45 @@
 GLMesh::GLMesh() : vbo_vertices_(0), vbo_colors_(0), vbo_normals_(0), vbo_uvs_(0), local_modelview_matrix_(glm::mat4(1.0)), texture_id_(0), texture_flag_(false) {
 }
 
+GLMesh::GLMesh(const GLMesh &other) {
+  DeepCopy(other);
+}
+
 GLMesh::~GLMesh() {
-  glDeleteBuffers(1, &vbo_vertices_);
-  glDeleteBuffers(1, &vbo_colors_);
-  glDeleteBuffers(1, &vbo_normals_);
-  glDeleteBuffers(1, &vbo_uvs_);
+  if (vbo_vertices_) {
+    glDeleteBuffers(1, &vbo_vertices_);
+  }
+  if (vbo_colors_) {
+    glDeleteBuffers(1, &vbo_colors_);
+  }
+  if (vbo_normals_) {
+    glDeleteBuffers(1, &vbo_normals_);
+  }
+  if (vbo_uvs_) {
+    glDeleteBuffers(1, &vbo_uvs_);
+  }
+}
+
+GLMesh &GLMesh::operator=(const GLMesh &other) {
+  DeepCopy(other);
+  return *this;
+}
+
+void GLMesh::DeepCopy(const GLMesh &other) {
+  vertices_ = other.vertices_;
+  colors_ = other.colors_;
+  normals_ = other.normals_;
+  uvs_ = other.uvs_;
+
+  texture_flag_ = other.texture_flag_;
+
+  texture_id_ = other.texture_id_;
+
+  local_modelview_matrix_ = other.local_modelview_matrix_;
+
+  vbo_vertices_ = vbo_colors_ = vbo_normals_ = vbo_uvs_ = 0;
+
+  this->Upload();
 }
 
 void GLMesh::AddCube(std::shared_ptr<GLMesh> mesh, const float size) {
@@ -194,28 +228,36 @@ void GLMesh::SetNormal() {
 
 void GLMesh::Upload() {
   if (vertices_.size()) {
-    glDeleteBuffers(1, &vbo_vertices_);
+    if (vbo_vertices_) {
+      glDeleteBuffers(1, &vbo_vertices_);
+    }
     glGenBuffers(1, &vbo_vertices_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices_);
     glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(vertices_[0]), vertices_.data(), GL_STATIC_DRAW);
   }
 
   if (colors_.size()) {
-    glDeleteBuffers(1, &vbo_colors_);
+    if (vbo_colors_) {
+      glDeleteBuffers(1, &vbo_colors_);
+    }
     glGenBuffers(1, &vbo_colors_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_colors_);
     glBufferData(GL_ARRAY_BUFFER, colors_.size() * sizeof(colors_[0]), colors_.data(), GL_STATIC_DRAW);
   }
 
   if (normals_.size()) {
-    glDeleteBuffers(1, &vbo_normals_);
+    if (vbo_normals_) {
+      glDeleteBuffers(1, &vbo_normals_);
+    }
     glGenBuffers(1, &vbo_normals_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_normals_);
     glBufferData(GL_ARRAY_BUFFER, normals_.size() * sizeof(normals_[0]), normals_.data(), GL_STATIC_DRAW);
   }
 
   if (uvs_.size()) {
-    glDeleteBuffers(1, &vbo_uvs_);
+    if (vbo_uvs_) {
+      glDeleteBuffers(1, &vbo_uvs_);
+    }
     glGenBuffers(1, &vbo_uvs_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_uvs_);
     glBufferData(GL_ARRAY_BUFFER, uvs_.size() * sizeof(uvs_[0]), uvs_.data(), GL_STATIC_DRAW);
